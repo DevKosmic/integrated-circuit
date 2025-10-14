@@ -7,6 +7,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.loot.LootPool;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.condition.SurvivesExplosionLootCondition;
+import net.minecraft.loot.context.LootContextParameters;
 import net.minecraft.loot.entry.ItemEntry;
 import net.minecraft.loot.function.CopyComponentsLootFunction;
 import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
@@ -36,7 +37,7 @@ public class IntegratedCircuitLootTables extends FabricBlockLootTableProvider {
                         .with(
                                 ItemEntry.builder(block)
                                         .apply(
-                                                CopyComponentsLootFunction.builder(CopyComponentsLootFunction.Source.BLOCK_ENTITY)
+                                                CopyComponentsLootFunction.blockEntity(LootContextParameters.BLOCK_ENTITY)
                                                         .include(DataComponentTypes.CUSTOM_NAME)
                                                         .include(IntegratedCircuit.CIRCUIT_DATA)
                                         )

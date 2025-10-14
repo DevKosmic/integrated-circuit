@@ -3,12 +3,10 @@ package net.replaceitem.integratedcircuit.client.gui;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.block.RedstoneWireBlock;
 import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
@@ -313,29 +311,29 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (this.client == null)
             return false;
 
-        ComponentPos clickedPos = getComponentPosAt((int) mouseX, (int) mouseY);
+        ComponentPos clickedPos = getComponentPosAt((int) click.x(), (int) click.y());
 
-        if (customNameTextField.isFocused() && !customNameTextField.isMouseOver(mouseX, mouseY)) {
+        if (customNameTextField.isFocused() && !customNameTextField.isMouseOver(click.x(), click.y())) {
             customNameTextField.setFocused(false);
         }
 
-        if (matchesMouse(DefaultConfig.config.getRotateKeybind(), button)) {
+        if (matchesMouse(DefaultConfig.config.getRotateKeybind(), click.button())) {
             rotateComponent(1);
             return true;
         }
 
         boolean isInCircuit = circuit.isInside(clickedPos);
-        boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), button);
+        boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), click.button());
 
         startedDraggingInside = false;
 
         if (isInCircuit) {
-            boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), button);
-            boolean isPick = !isDestroy && matchesMouse(DefaultConfig.config.getPickKeybind(), button);
+            boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), click.button());
+            boolean isPick = !isDestroy && matchesMouse(DefaultConfig.config.getPickKeybind(), click.button());
 
             if (isPlace) {
                 ComponentState state = circuit.getComponentState(clickedPos);
@@ -368,7 +366,7 @@ public class IntegratedCircuitScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     private void breakComponent(ComponentPos pos) {
@@ -421,12 +419,12 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
         if (startedDraggingInside && this.client != null) {
-            ComponentPos mousePos = getComponentPosAt((int) mouseX, (int) mouseY);
+            ComponentPos mousePos = getComponentPosAt((int) click.x(), (int) click.y());
             if (circuit.isInside(mousePos)) {
-                boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), button);
-                boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), button);
+                boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), click.button());
+                boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), click.button());
                 if (isPlace) {
                     placeComponent(mousePos);
                 } else if (isDestroy) {
@@ -436,7 +434,7 @@ public class IntegratedCircuitScreen extends Screen {
             }
         }
 
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(click, offsetX, offsetY);
     }
 
     private void rotateComponent(int amount) {
@@ -460,28 +458,28 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (this.customNameTextField.isFocused()) {
-            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER || keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (input.isEnter() || input.isEscape()) {
                 customNameTextField.setFocused(false);
                 return true;
             }
         }
 
-        if (matchesKey(DefaultConfig.config.getRotateKeybind(), keyCode, scanCode)) {
+        if (matchesKey(DefaultConfig.config.getRotateKeybind(), input.getKeycode(), input.scancode())) {
             rotateComponent(1);
             return true;
         }
 
-        if (keyCode >= GLFW.GLFW_KEY_0 && keyCode <= GLFW.GLFW_KEY_9) {
-            if (keyCode == GLFW.GLFW_KEY_0) {
+        if (input.getKeycode() >= GLFW.GLFW_KEY_0 && input.getKeycode() <= GLFW.GLFW_KEY_9) {
+            if (input.getKeycode() == GLFW.GLFW_KEY_0) {
                 deselectPalette();
             } else {
-                selectPalette(keyCode - GLFW.GLFW_KEY_1);
+                selectPalette(input.getKeycode() - GLFW.GLFW_KEY_1);
             }
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     public int getX() {

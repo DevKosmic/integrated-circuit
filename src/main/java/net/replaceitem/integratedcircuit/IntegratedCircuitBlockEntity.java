@@ -57,7 +57,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity implements Nameabl
     
     private void tryCreateCircuit() {
         World world = this.getWorld();
-        if(world != null && !world.isClient) {
+        if(world != null && !world.isClient()) {
             BlockEntityServerCircuitContext context = new BlockEntityServerCircuitContext(this);
             if(this.circuitNbt != null) {
                 this.circuit = new CircuitSerializer(this.circuitNbt).readServerCircuit(context);

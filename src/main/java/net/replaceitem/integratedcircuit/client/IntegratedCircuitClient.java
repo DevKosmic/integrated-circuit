@@ -9,7 +9,6 @@ import net.minecraft.client.render.BlockRenderLayer;
 import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
-import net.replaceitem.integratedcircuit.IntegratedCircuitBlockEntityRenderer;
 import net.replaceitem.integratedcircuit.client.config.DefaultConfig;
 import net.replaceitem.integratedcircuit.network.ClientPacketHandler;
 import net.replaceitem.integratedcircuit.network.packet.CircuitNameUpdateS2CPacket;

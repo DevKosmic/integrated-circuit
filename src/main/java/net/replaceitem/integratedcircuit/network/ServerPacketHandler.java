@@ -15,7 +15,7 @@ import java.util.Objects;
 public class ServerPacketHandler {
     public static void receiveComponentInteraction(ComponentInteractionC2SPacket packet, ServerPlayNetworking.Context context) {
         ServerPlayerEntity player = context.player();
-        ServerWorld world = player.getWorld();
+        ServerWorld world = player.getEntityWorld();
         if(
                 world.getBlockState(packet.blockPos()).isIn(IntegratedCircuit.Tags.INTEGRATED_CIRCUITS_BLOCK_TAG) &&
                 world.getBlockEntity(packet.blockPos()) instanceof IntegratedCircuitBlockEntity integratedCircuitBlockEntity &&
@@ -29,7 +29,7 @@ public class ServerPacketHandler {
     public static void receiveFinishEditingPacket(FinishEditingC2SPacket packet, ServerPlayNetworking.Context context) {
         ServerPlayerEntity player = context.player();
         player.updateLastActionTime();
-        ServerWorld serverWorld = player.getWorld();
+        ServerWorld serverWorld = player.getEntityWorld();
         BlockEntity blockEntity = serverWorld.getBlockEntity(packet.pos());
 
         if (blockEntity instanceof IntegratedCircuitBlockEntity integratedCircuitBlockEntity) {
@@ -40,7 +40,7 @@ public class ServerPacketHandler {
     public static void receiveRenameCircuitPacket(RenameCircuitC2SPacket packet, ServerPlayNetworking.Context context) {
         BlockPos pos = packet.pos();
         ServerPlayerEntity renamingPlayer = context.player();
-        ServerWorld serverWorld = renamingPlayer.getWorld();
+        ServerWorld serverWorld = renamingPlayer.getEntityWorld();
         BlockEntity blockEntity = serverWorld.getBlockEntity(pos);
 
         renamingPlayer.updateLastActionTime();
@@ -65,7 +65,7 @@ public class ServerPacketHandler {
 
     public static void receivePlaceComponentPacket(PlaceComponentC2SPacket packet, ServerPlayNetworking.Context context) {
         ServerPlayerEntity player = context.player();
-        ServerWorld world = player.getWorld();
+        ServerWorld world = player.getEntityWorld();
         if(
                 world.getBlockState(packet.blockPos()).isIn(IntegratedCircuit.Tags.INTEGRATED_CIRCUITS_BLOCK_TAG) && 
                 world.getBlockEntity(packet.blockPos()) instanceof IntegratedCircuitBlockEntity integratedCircuitBlockEntity &&

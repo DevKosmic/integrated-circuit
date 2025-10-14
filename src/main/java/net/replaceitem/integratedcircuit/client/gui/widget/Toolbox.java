@@ -1,5 +1,6 @@
 package net.replaceitem.integratedcircuit.client.gui.widget;
 
+import net.minecraft.client.gui.Click;
 import net.replaceitem.integratedcircuit.circuit.Component;
 import net.replaceitem.integratedcircuit.circuit.Components;
 import net.replaceitem.integratedcircuit.client.gui.IntegratedCircuitScreen;
@@ -61,7 +62,7 @@ public class Toolbox {
 
             componentButtons.add(new ToolboxButton(owner.getX() + this.x + slotX, owner.getY() + this.y + slotY, component) {
                 @Override
-                public void onClick(double mouseX, double mouseY) {
+                public void onClick(Click click, boolean doubled) {
                     if (selected) {
                         deselectTool();
                     } else {

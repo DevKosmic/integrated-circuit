@@ -78,7 +78,7 @@ public class ModelGenerator extends FabricModelProvider {
         blockStateModelGenerator.blockStateCollector
                 .accept(
                         VariantsBlockModelDefinitionCreator.of(block, BlockStateModelGenerator.createWeightedVariant(modelId))
-                                .coordinate(NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS)
+                                .apply(NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS)
                 );
 
         TintSource wireOffTint = ItemModels.constantTintSource(RedstoneWireBlock.getWireColor(0));

@@ -87,7 +87,7 @@ public class IntegratedCircuitBlock extends HorizontalFacingBlock implements Blo
     @Override
     protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @Nullable WireOrientation wireOrientation, boolean notify) {
         super.neighborUpdate(state, world, pos, sourceBlock, wireOrientation, notify);
-        if(world.isClient) return;
+        if(world.isClient()) return;
         if(world.getBlockEntity(pos) instanceof IntegratedCircuitBlockEntity integratedCircuitBlockEntity && integratedCircuitBlockEntity.getCircuit() != null) {
             for (FlatDirection direction : FlatDirection.VALUES) {
                 integratedCircuitBlockEntity.getCircuit().getContext().readExternalPower(direction);
@@ -217,7 +217,7 @@ public class IntegratedCircuitBlock extends HorizontalFacingBlock implements Blo
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof IntegratedCircuitBlockEntity integratedCircuitBlockEntity) {
             ServerCircuit circuit = integratedCircuitBlockEntity.getCircuit();
-            if (!world.isClient && player.isCreative() && circuit != null && !circuit.isEmpty()) {
+            if (!world.isClient() && player.isCreative() && circuit != null && !circuit.isEmpty()) {
                 dropStacks(state, world, pos, blockEntity, player, player.getMainHandStack());
             }
         }

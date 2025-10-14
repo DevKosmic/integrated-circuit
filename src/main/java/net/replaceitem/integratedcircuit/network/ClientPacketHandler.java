@@ -1,20 +1,18 @@
 package net.replaceitem.integratedcircuit.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.replaceitem.integratedcircuit.IntegratedCircuitBlockEntity;
 import net.replaceitem.integratedcircuit.client.gui.IntegratedCircuitScreen;
 import net.replaceitem.integratedcircuit.network.packet.CircuitNameUpdateS2CPacket;
 import net.replaceitem.integratedcircuit.network.packet.ComponentUpdateS2CPacket;
 import net.replaceitem.integratedcircuit.network.packet.EditIntegratedCircuitS2CPacket;
 
+@SuppressWarnings("resource")
 public class ClientPacketHandler {
     public static void receiveEditIntegratedCircuitPacket(EditIntegratedCircuitS2CPacket packet, ClientPlayNetworking.Context context) {
         context.client().setScreen(
             new IntegratedCircuitScreen(
                 packet.getClientCircuit(
-                    context.player().clientWorld,
+                    context.client().world,
                     packet.pos()
                 ),
                 packet.customName()
