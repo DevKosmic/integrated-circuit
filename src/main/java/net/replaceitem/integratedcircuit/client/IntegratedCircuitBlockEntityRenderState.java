@@ -1,8 +1,8 @@
 package net.replaceitem.integratedcircuit.client;
 
-import net.minecraft.client.render.block.entity.state.BlockEntityRenderState;
-import net.minecraft.text.Text;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.network.chat.Component;
 
 public class IntegratedCircuitBlockEntityRenderState extends BlockEntityRenderState {
-    public Text customName;
+    public Component customName;
 }

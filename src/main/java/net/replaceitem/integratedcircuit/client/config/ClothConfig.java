@@ -1,33 +1,33 @@
 package net.replaceitem.integratedcircuit.client.config;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
-import net.minecraft.client.util.InputUtil;
 
 @Config(name = "integrated_circuit")
 public class ClothConfig extends DefaultConfig implements ConfigData {
-    public InputUtil.Key place_component = super.getPlaceKeybind();
+    public InputConstants.Key place_component = super.getPlaceKeybind();
     @Override
-    public InputUtil.Key getPlaceKeybind() {
+    public InputConstants.Key getPlaceKeybind() {
         return place_component;
     }
 
-    public InputUtil.Key destroy_component = super.getDestroyKeybind();
+    public InputConstants.Key destroy_component = super.getDestroyKeybind();
     @Override
-    public InputUtil.Key getDestroyKeybind() {
+    public InputConstants.Key getDestroyKeybind() {
         return destroy_component;
     }
 
-    public InputUtil.Key pick_component = super.getPickKeybind();
+    public InputConstants.Key pick_component = super.getPickKeybind();
     @Override
-    public InputUtil.Key getPickKeybind() {
+    public InputConstants.Key getPickKeybind() {
         return pick_component;
     }
 
-    public InputUtil.Key rotate_component = super.getRotateKeybind();
+    public InputConstants.Key rotate_component = super.getRotateKeybind();
     @Override
-    public InputUtil.Key getRotateKeybind() {
+    public InputConstants.Key getRotateKeybind() {
         return rotate_component;
     }
     

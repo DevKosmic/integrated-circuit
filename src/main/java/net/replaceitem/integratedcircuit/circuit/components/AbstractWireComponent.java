@@ -1,7 +1,6 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.text.Text;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
 import net.replaceitem.integratedcircuit.circuit.ComponentState;
@@ -15,8 +14,8 @@ public abstract class AbstractWireComponent extends AbstractConductingComponent 
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        int signalStrength = state.get(getPowerProperty());
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        int signalStrength = state.getValue(getPowerProperty());
         return IntegratedCircuitScreen.getSignalStrengthText(signalStrength);
     }
 
@@ -46,15 +45,15 @@ public abstract class AbstractWireComponent extends AbstractConductingComponent 
     @Override
     protected void update(Circuit circuit, ComponentPos pos, ComponentState state) {
         int i = getReceivedRedstonePower(circuit, pos);
-        if (state.get(getPowerProperty()) != i) {
+        if (state.getValue(getPowerProperty()) != i) {
             if (circuit.getComponentState(pos) == state) {
-                circuit.setComponentState(pos, state.with(getPowerProperty(), i), Component.NOTIFY_LISTENERS);
+                circuit.setComponentState(pos, state.setValue(getPowerProperty(), i), Component.NOTIFY_LISTENERS);
             }
             this.updateAfterSignalStrengthChange(circuit, pos);
         }
     }
 
-    protected IntProperty getPowerProperty() {
+    protected IntegerProperty getPowerProperty() {
         return WireComponent.POWER;
     }
 

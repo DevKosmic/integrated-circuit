@@ -1,13 +1,12 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.block.Block;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -23,11 +22,11 @@ public class ObserverComponent extends FacingComponent {
     public static final Identifier TOOL_TEXTURE = IntegratedCircuit.id("toolbox/icons/observer");
     public static final Identifier TEXTURE_ON = IntegratedCircuit.id("textures/integrated_circuit/observer_on.png");
 
-    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public ObserverComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(FACING, FlatDirection.NORTH).with(POWERED, false));
+        this.setDefaultState(this.getStateManager().any().setValue(FACING, FlatDirection.NORTH).setValue(POWERED, false));
     }
 
     @Override
@@ -41,21 +40,21 @@ public class ObserverComponent extends FacingComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return IntegratedCircuitScreen.getSignalStrengthText(state.get(POWERED) ? 15 : 0);
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return IntegratedCircuitScreen.getSignalStrengthText(state.getValue(POWERED) ? 15 : 0);
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, state.get(POWERED) ? TEXTURE_ON : ITEM_TEXTURE, x, y, state.get(FACING).getOpposite().getIndex(), a);
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, state.getValue(POWERED) ? TEXTURE_ON : ITEM_TEXTURE, x, y, state.getValue(FACING).getOpposite().getIndex(), a);
     }
 
     @Override
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
-        if (state.get(POWERED)) {
-            circuit.setComponentState(pos, state.with(POWERED, false), Block.NOTIFY_LISTENERS);
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
+        if (state.getValue(POWERED)) {
+            circuit.setComponentState(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
         } else {
-            circuit.setComponentState(pos, state.with(POWERED, true), Block.NOTIFY_LISTENERS);
+            circuit.setComponentState(pos, state.setValue(POWERED, true), Block.UPDATE_CLIENTS);
             circuit.scheduleBlockTick(pos, this, 2);
         }
         this.updateNeighbors(circuit, pos, state);
@@ -63,7 +62,7 @@ public class ObserverComponent extends FacingComponent {
 
     @Override
     public ComponentState getStateForNeighborUpdate(ComponentState state, FlatDirection direction, ComponentState neighborState, Circuit circuit, ComponentPos pos, ComponentPos neighborPos) {
-        if (state.get(FACING) == direction && !state.get(POWERED)) {
+        if (state.getValue(FACING) == direction && !state.getValue(POWERED)) {
             this.scheduleTick(circuit, pos);
         }
         return super.getStateForNeighborUpdate(state, direction, neighborState, circuit, pos, neighborPos);
@@ -76,7 +75,7 @@ public class ObserverComponent extends FacingComponent {
     }
 
     protected void updateNeighbors(Circuit world, ComponentPos pos, ComponentState state) {
-        FlatDirection direction = state.get(FACING);
+        FlatDirection direction = state.getValue(FACING);
         ComponentPos blockPos = pos.offset(direction.getOpposite());
         world.updateNeighbor(blockPos, this, pos);
         world.updateNeighborsExcept(blockPos, this, direction);
@@ -94,7 +93,7 @@ public class ObserverComponent extends FacingComponent {
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
-        if (state.get(POWERED) && state.get(FACING) == direction) {
+        if (state.getValue(POWERED) && state.getValue(FACING) == direction) {
             return 15;
         }
         return 0;
@@ -105,9 +104,9 @@ public class ObserverComponent extends FacingComponent {
         if (state.isOf(oldState.getComponent())) {
             return;
         }
-        if(!circuit.isClient && state.get(POWERED) && !circuit.getCircuitTickScheduler().isQueued(pos, this)) {
-            ComponentState blockState = state.with(POWERED, false);
-            circuit.setComponentState(pos, blockState, Block.NOTIFY_LISTENERS | Block.FORCE_STATE);
+        if(!circuit.isClient && state.getValue(POWERED) && !circuit.getCircuitTickScheduler().isQueued(pos, this)) {
+            ComponentState blockState = state.setValue(POWERED, false);
+            circuit.setComponentState(pos, blockState, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
             this.updateNeighbors(circuit, pos, blockState);
         }
     }
@@ -117,8 +116,8 @@ public class ObserverComponent extends FacingComponent {
         if (state.isOf(newState.getComponent())) {
             return;
         }
-        if (!circuit.isClient && state.get(POWERED) && circuit.getCircuitTickScheduler().isQueued(pos, this)) {
-            this.updateNeighbors(circuit, pos, state.with(POWERED, false));
+        if (!circuit.isClient && state.getValue(POWERED) && circuit.getCircuitTickScheduler().isQueued(pos, this)) {
+            this.updateNeighbors(circuit, pos, state.setValue(POWERED, false));
         }
     }
 
@@ -133,7 +132,7 @@ public class ObserverComponent extends FacingComponent {
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(POWERED);
     }

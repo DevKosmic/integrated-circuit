@@ -1,12 +1,12 @@
 package net.replaceitem.integratedcircuit.circuit.context;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 public interface ClientCircuitContext extends CircuitContext {
     BlockPos getBlockPos();
-    void playSound(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch);
+    void playSound(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch);
 }

@@ -2,35 +2,42 @@ package net.replaceitem.integratedcircuit.datagen;
 
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.RedstoneWireBlock;
+import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.*;
-import net.minecraft.client.render.item.tint.TintSource;
-import net.minecraft.client.render.model.json.ModelVariantOperator;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.ItemModelGenerators;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
+import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.data.models.model.ModelTemplate;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.renderer.block.model.VariantMutator;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 
 import java.util.Optional;
 
-import static net.minecraft.client.data.TextureMap.getId;
-import static net.minecraft.client.data.TextureMap.getSubId;
+import static net.minecraft.client.data.models.model.TextureMapping.getBlockTexture;
 import static net.replaceitem.integratedcircuit.IntegratedCircuit.Blocks.*;
 
 public class ModelGenerator extends FabricModelProvider {
 
-    public static final TextureKey SIDES = TextureKey.of("sides");
-    public static final Identifier TEMPLATE_MODEL_ID = Identifier.of(IntegratedCircuit.MOD_ID, "block/template_integrated_circuit");
-    public static final Model TEMPLATE_CIRCUIT = new Model(Optional.of(TEMPLATE_MODEL_ID), Optional.empty(), TextureKey.TOP, SIDES, TextureKey.BOTTOM, TextureKey.PARTICLE);
+    public static final TextureSlot SIDES = TextureSlot.create("sides");
+    public static final Identifier TEMPLATE_MODEL_ID = Identifier.fromNamespaceAndPath(IntegratedCircuit.MOD_ID, "block/template_integrated_circuit");
+    public static final ModelTemplate TEMPLATE_CIRCUIT = new ModelTemplate(Optional.of(TEMPLATE_MODEL_ID), Optional.empty(), TextureSlot.TOP, SIDES, TextureSlot.BOTTOM, TextureSlot.PARTICLE);
     
-    public static TextureMap circuitTextures(Block block, Block bottomBlock) {
-        return new TextureMap()
-                .put(TextureKey.TOP, getSubId(block, "_top"))
-                .put(SIDES, getSubId(block, "_sides"))
-                .put(TextureKey.BOTTOM, getId(bottomBlock))
-                .put(TextureKey.PARTICLE, getSubId(block, "_top"));
+    public static TextureMapping circuitTextures(Block block, Block bottomBlock) {
+        return new TextureMapping()
+                .put(TextureSlot.TOP, getBlockTexture(block, "_top"))
+                .put(SIDES, getBlockTexture(block, "_sides"))
+                .put(TextureSlot.BOTTOM, getBlockTexture(bottomBlock))
+                .put(TextureSlot.PARTICLE, getBlockTexture(block, "_top"));
     }
 
     public ModelGenerator(FabricDataOutput output) {
@@ -38,7 +45,7 @@ public class ModelGenerator extends FabricModelProvider {
     }
 
     @Override
-    public void generateBlockStateModels(BlockStateModelGenerator blockStateModelGenerator) {
+    public void generateBlockStateModels(BlockModelGenerators blockStateModelGenerator) {
         registerCircuit(blockStateModelGenerator, INTEGRATED_CIRCUIT, Blocks.SMOOTH_STONE);
         registerCircuit(blockStateModelGenerator, WHITE_INTEGRATED_CIRCUIT, Blocks.WHITE_CONCRETE);
         registerCircuit(blockStateModelGenerator, ORANGE_INTEGRATED_CIRCUIT, Blocks.ORANGE_CONCRETE);
@@ -59,29 +66,29 @@ public class ModelGenerator extends FabricModelProvider {
     }
 
     @Override
-    public void generateItemModels(ItemModelGenerator itemModelGenerator) {
+    public void generateItemModels(ItemModelGenerators itemModelGenerator) {
 
     }
 
-    private static final BlockStateVariantMap<ModelVariantOperator> NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS = BlockStateVariantMap.operations(
-                    Properties.HORIZONTAL_FACING
+    private static final PropertyDispatch<VariantMutator> NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS = PropertyDispatch.modify(
+                    BlockStateProperties.HORIZONTAL_FACING
             )
-            .register(Direction.EAST, BlockStateModelGenerator.ROTATE_Y_90)
-            .register(Direction.SOUTH, BlockStateModelGenerator.ROTATE_Y_180)
-            .register(Direction.WEST, BlockStateModelGenerator.ROTATE_Y_270)
-            .register(Direction.NORTH, BlockStateModelGenerator.NO_OP);
+            .select(Direction.EAST, BlockModelGenerators.Y_ROT_90)
+            .select(Direction.SOUTH, BlockModelGenerators.Y_ROT_180)
+            .select(Direction.WEST, BlockModelGenerators.Y_ROT_270)
+            .select(Direction.NORTH, BlockModelGenerators.NOP);
     
-    public final void registerCircuit(BlockStateModelGenerator blockStateModelGenerator, Block block, Block baseBlock) {
-        TextureMap textureMap = circuitTextures(block, baseBlock);
+    public final void registerCircuit(BlockModelGenerators blockStateModelGenerator, Block block, Block baseBlock) {
+        TextureMapping textureMap = circuitTextures(block, baseBlock);
         
-        Identifier modelId = TEMPLATE_CIRCUIT.upload(block, textureMap, blockStateModelGenerator.modelCollector);
-        blockStateModelGenerator.blockStateCollector
+        Identifier modelId = TEMPLATE_CIRCUIT.create(block, textureMap, blockStateModelGenerator.modelOutput);
+        blockStateModelGenerator.blockStateOutput
                 .accept(
-                        VariantsBlockModelDefinitionCreator.of(block, BlockStateModelGenerator.createWeightedVariant(modelId))
-                                .apply(NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS)
+                        MultiVariantGenerator.dispatch(block, BlockModelGenerators.plainVariant(modelId))
+                                .with(NORTH_DEFAULT_HORIZONTAL_ROTATION_OPERATIONS)
                 );
 
-        TintSource wireOffTint = ItemModels.constantTintSource(RedstoneWireBlock.getWireColor(0));
-        blockStateModelGenerator.itemModelOutput.accept(block.asItem(), ItemModels.tinted(modelId, wireOffTint, wireOffTint, wireOffTint, wireOffTint));
+        ItemTintSource wireOffTint = ItemModelUtils.constantTint(RedStoneWireBlock.getColorForPower(0));
+        blockStateModelGenerator.itemModelOutput.accept(block.asItem(), ItemModelUtils.tintedModel(modelId, wireOffTint, wireOffTint, wireOffTint, wireOffTint));
     }
 }

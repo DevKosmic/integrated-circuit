@@ -2,9 +2,9 @@ package net.replaceitem.integratedcircuit.circuit;
 
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.replaceitem.integratedcircuit.circuit.context.ClientCircuitContext;
 import net.replaceitem.integratedcircuit.circuit.context.ServerCircuitContext;
 import org.slf4j.Logger;
@@ -30,9 +30,9 @@ public class CircuitSerializer {
     public static final String PORTS_TAG = "ports";
     public static final String TICK_SCHEDULER_TAG = "tickScheduler";
     
-    private final NbtCompound root;
+    private final CompoundTag root;
 
-    public CircuitSerializer(NbtCompound nbt) {
+    public CircuitSerializer(CompoundTag nbt) {
         this.root = nbt;
     }
 
@@ -71,7 +71,7 @@ public class CircuitSerializer {
                 .orElseGet(CircuitSection::new);
     }
 
-    public static DataResult<NbtElement> writeCircuit(ServerCircuit circuit) {
+    public static DataResult<Tag> writeCircuit(ServerCircuit circuit) {
         return ServerCircuit.CODEC.encodeStart(circuit.getContext(), NbtOps.INSTANCE, circuit);
     }
 }

@@ -1,12 +1,11 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -21,12 +20,12 @@ public class CrossoverComponent extends AbstractConductingComponent {
     private static final Identifier TOOL_TEXTURE = IntegratedCircuit.id("toolbox/icons/crossover");
     private static final Identifier TEXTURE_BRIDGE = IntegratedCircuit.id("textures/integrated_circuit/wire_bridge.png");
 
-    public static final IntProperty POWER_X = IntProperty.of("power_x", 0, 15);
-    public static final IntProperty POWER_Y = IntProperty.of("power_y", 0, 15);
+    public static final IntegerProperty POWER_X = IntegerProperty.create("power_x", 0, 15);
+    public static final IntegerProperty POWER_Y = IntegerProperty.create("power_y", 0, 15);
 
     public CrossoverComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(POWER_X, 0).with(POWER_Y, 0));
+        this.setDefaultState(this.getStateManager().any().setValue(POWER_X, 0).setValue(POWER_Y, 0));
     }
 
     @Override
@@ -40,21 +39,21 @@ public class CrossoverComponent extends AbstractConductingComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return Text.literal("─ ")
-            .append(IntegratedCircuitScreen.getSignalStrengthText(state.get(POWER_X)))
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return net.minecraft.network.chat.Component.literal("─ ")
+            .append(IntegratedCircuitScreen.getSignalStrengthText(state.getValue(POWER_X)))
             .append(" │ ")
-            .append(IntegratedCircuitScreen.getSignalStrengthText(state.get(POWER_Y)));
+            .append(IntegratedCircuitScreen.getSignalStrengthText(state.getValue(POWER_Y)));
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        int colorX = RedstoneWireBlock.getWireColor(state.get(POWER_X));
-        int colorY = RedstoneWireBlock.getWireColor(state.get(POWER_Y));
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        int colorX = RedStoneWireBlock.getColorForPower(state.getValue(POWER_X));
+        int colorY = RedStoneWireBlock.getColorForPower(state.getValue(POWER_Y));
 
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_X, x, y, 0, ColorHelper.withAlpha(ColorHelper.channelFromFloat(a), colorX));
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_X, x, y, 0, ARGB.color(ARGB.as8BitChannel(a), colorX));
         IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_BRIDGE, x, y, 0, a);
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_Y, x, y, 0, ColorHelper.withAlpha(ColorHelper.channelFromFloat(a), colorY));
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_Y, x, y, 0, ARGB.color(ARGB.as8BitChannel(a), colorY));
     }
 
 
@@ -83,9 +82,9 @@ public class CrossoverComponent extends AbstractConductingComponent {
     protected void update(Circuit circuit, ComponentPos pos, ComponentState state) {
         int powerX = getReceivedRedstonePower(circuit, pos, FlatDirection.Axis.X);
         int powerY = getReceivedRedstonePower(circuit, pos, FlatDirection.Axis.Y);
-        if (state.get(POWER_X) != powerX || state.get(POWER_Y) != powerY) {
+        if (state.getValue(POWER_X) != powerX || state.getValue(POWER_Y) != powerY) {
             if (circuit.getComponentState(pos) == state) {
-                circuit.setComponentState(pos, state.with(POWER_X, powerX).with(POWER_Y, powerY), Component.NOTIFY_LISTENERS);
+                circuit.setComponentState(pos, state.setValue(POWER_X, powerX).setValue(POWER_Y, powerY), Component.NOTIFY_LISTENERS);
             }
             this.updateAfterSignalStrengthChange(circuit, pos);
         }
@@ -118,16 +117,16 @@ public class CrossoverComponent extends AbstractConductingComponent {
         if (!wiresGivePower) {
             return 0;
         }
-        return direction.getAxis() == FlatDirection.Axis.X ? state.get(POWER_X) : state.get(POWER_Y);
+        return direction.getAxis() == FlatDirection.Axis.X ? state.getValue(POWER_X) : state.getValue(POWER_Y);
     }
 
     @Override
     public int increasePower(ComponentState state, FlatDirection side) {
-        return side.getAxis() == FlatDirection.Axis.X ? state.get(POWER_X) : state.get(POWER_Y);
+        return side.getAxis() == FlatDirection.Axis.X ? state.getValue(POWER_X) : state.getValue(POWER_Y);
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(POWER_X);
         builder.add(POWER_Y);

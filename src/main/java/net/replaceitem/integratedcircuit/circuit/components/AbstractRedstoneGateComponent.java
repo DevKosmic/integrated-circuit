@@ -1,34 +1,34 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.block.Block;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.tick.TickPriority;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.ticks.TickPriority;
 import net.replaceitem.integratedcircuit.circuit.*;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
 
 public abstract class AbstractRedstoneGateComponent extends FacingComponent {
 
-    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public AbstractRedstoneGateComponent(Settings settings) {
         super(settings);
     }
 
     @Override
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
         if (this.isLocked(circuit, pos, state)) {
             return;
         }
-        boolean powered = state.get(POWERED);
+        boolean powered = state.getValue(POWERED);
         boolean hasPower = this.hasPower(circuit, pos, state);
         if (powered && !hasPower) {
-            circuit.setComponentState(pos, state.with(POWERED, false), Block.NOTIFY_LISTENERS);
+            circuit.setComponentState(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
         } else if (!powered) {
-            circuit.setComponentState(pos, state.with(POWERED, true), Block.NOTIFY_LISTENERS);
+            circuit.setComponentState(pos, state.setValue(POWERED, true), Block.UPDATE_CLIENTS);
             if (!hasPower) {
                 circuit.scheduleBlockTick(pos, this, this.getUpdateDelayInternal(state), TickPriority.VERY_HIGH);
             }
@@ -42,10 +42,10 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
-        if (!state.get(POWERED)) {
+        if (!state.getValue(POWERED)) {
             return 0;
         }
-        if (state.get(FACING) == direction) {
+        if (state.getValue(FACING) == direction) {
             return this.getOutputLevel(circuit, pos, state);
         }
         return 0;
@@ -67,7 +67,7 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
         if (this.isLocked(circuit, pos, state)) {
             return;
         }
-        boolean isPowered = state.get(POWERED);
+        boolean isPowered = state.getValue(POWERED);
         if (isPowered != this.hasPower(circuit, pos, state) && !circuit.getCircuitTickScheduler().isTicking(pos, this)) {
             TickPriority tickPriority = TickPriority.HIGH;
             if (this.isTargetNotAligned(circuit, pos, state)) {
@@ -88,18 +88,18 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
     }
 
     protected int getPower(Circuit circuit, ComponentPos pos, ComponentState state) {
-        FlatDirection facing = state.get(FACING);
+        FlatDirection facing = state.getValue(FACING);
         ComponentPos blockPos = pos.offset(facing);
         int i = circuit.getEmittedRedstonePower(blockPos, facing);
         if (i >= 15) {
             return i;
         }
         ComponentState blockState = circuit.getComponentState(blockPos);
-        return Math.max(i, (blockState.isOf(Components.WIRE)) ? blockState.get(WireComponent.POWER) : 0);
+        return Math.max(i, (blockState.isOf(Components.WIRE)) ? blockState.getValue(WireComponent.POWER) : 0);
     }
 
     protected int getMaxInputLevelSides(Circuit circuit, ComponentPos pos, ComponentState state) {
-        FlatDirection direction = state.get(FACING);
+        FlatDirection direction = state.getValue(FACING);
         FlatDirection direction2 = direction.rotated(1);
         FlatDirection direction3 = direction.rotated(-1);
         return Math.max(this.getInputLevel(circuit, pos.offset(direction2), direction2), this.getInputLevel(circuit, pos.offset(direction3), direction3));
@@ -112,7 +112,7 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
                 return 15;
             }
             if (state.isOf(Components.WIRE)) {
-                return state.get(WireComponent.POWER);
+                return state.getValue(WireComponent.POWER);
             }
             return circuit.getStrongRedstonePower(pos, dir);
         }
@@ -126,7 +126,7 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
 
     @Override
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
-        return this.getDefaultState().with(FACING, rotation);
+        return this.getDefaultState().setValue(FACING, rotation);
     }
 
     @Override
@@ -151,7 +151,7 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
     }
 
     protected void updateTarget(Circuit circuit, ComponentPos pos, ComponentState state) {
-        FlatDirection direction = state.get(FACING);
+        FlatDirection direction = state.getValue(FACING);
         ComponentPos blockPos = pos.offset(direction.getOpposite());
         circuit.updateNeighbor(blockPos, this, pos);
         circuit.updateNeighborsExcept(blockPos, this, direction);
@@ -170,9 +170,9 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
     }
 
     public boolean isTargetNotAligned(Circuit world, ComponentPos pos, ComponentState state) {
-        FlatDirection direction = state.get(FACING).getOpposite();
+        FlatDirection direction = state.getValue(FACING).getOpposite();
         ComponentState blockState = world.getComponentState(pos.offset(direction));
-        return AbstractRedstoneGateComponent.isRedstoneGate(blockState) && state.get(FACING) != direction;
+        return AbstractRedstoneGateComponent.isRedstoneGate(blockState) && state.getValue(FACING) != direction;
     }
 
     protected abstract int getUpdateDelayInternal(ComponentState state);
@@ -183,7 +183,7 @@ public abstract class AbstractRedstoneGateComponent extends FacingComponent {
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(POWERED);
     }

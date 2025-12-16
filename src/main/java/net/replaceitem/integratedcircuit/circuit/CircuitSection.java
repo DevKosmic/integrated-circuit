@@ -2,15 +2,15 @@ package net.replaceitem.integratedcircuit.circuit;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.world.chunk.PaletteProvider;
-import net.minecraft.world.chunk.PalettedContainer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.chunk.Strategy;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 
 public class CircuitSection {
-    public static final PaletteProvider<ComponentState> COMPONENT_STATE_PALETTE_PROVIDER = new FlatPaletteProvider<>(Component.STATE_IDS, 15);
+    public static final Strategy<ComponentState> COMPONENT_STATE_PALETTE_PROVIDER = new FlatPaletteProvider<>(Component.STATE_IDS, 15);
     
-    public static final Codec<PalettedContainer<ComponentState>> PALETTE_CODEC = PalettedContainer.createPalettedContainerCodec(
+    public static final Codec<PalettedContainer<ComponentState>> PALETTE_CODEC = PalettedContainer.codecRW(
             ComponentState.CODEC, CircuitSection.COMPONENT_STATE_PALETTE_PROVIDER, Components.AIR.getDefaultState()
     );
     
@@ -44,16 +44,16 @@ public class CircuitSection {
         stateContainer.set(pos.getX(), pos.getY(), 0, state);
     }
 
-    public void readPacket(PacketByteBuf buf) {
+    public void readPacket(FriendlyByteBuf buf) {
         // TODO use this for sending circuits to clients
-        this.stateContainer.readPacket(buf);
+        this.stateContainer.read(buf);
     }
 
-    public void writePacket(PacketByteBuf buf) {
-        this.stateContainer.writePacket(buf);
+    public void writePacket(FriendlyByteBuf buf) {
+        this.stateContainer.write(buf);
     }
 
     public boolean isEmpty() {
-        return !stateContainer.hasAny(componentState -> componentState != Components.AIR_DEFAULT_STATE);
+        return !stateContainer.maybeHas(componentState -> componentState != Components.AIR_DEFAULT_STATE);
     }
 }

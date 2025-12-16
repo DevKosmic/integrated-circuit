@@ -2,23 +2,23 @@ package net.replaceitem.integratedcircuit.datagen;
 
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider;
-import net.minecraft.block.Block;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.loot.LootPool;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.condition.SurvivesExplosionLootCondition;
-import net.minecraft.loot.context.LootContextParameters;
-import net.minecraft.loot.entry.ItemEntry;
-import net.minecraft.loot.function.CopyComponentsLootFunction;
-import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
 
 import java.util.concurrent.CompletableFuture;
 
 public class IntegratedCircuitLootTables extends FabricBlockLootTableProvider {
-    public IntegratedCircuitLootTables(FabricDataOutput dataOutput, CompletableFuture<RegistryWrapper.WrapperLookup> registryLookup) {
+    public IntegratedCircuitLootTables(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
         super(dataOutput, registryLookup);
     }
 
@@ -30,15 +30,15 @@ public class IntegratedCircuitLootTables extends FabricBlockLootTableProvider {
     }
     
     private void addIntegratedCircuitDrop(Block block) {
-        addDrop(block, LootTable.builder().pool(
-                LootPool.builder()
-                        .conditionally(SurvivesExplosionLootCondition.builder())
-                        .rolls(ConstantLootNumberProvider.create(1.0F))
-                        .with(
-                                ItemEntry.builder(block)
+        add(block, LootTable.lootTable().withPool(
+                LootPool.lootPool()
+                        .when(ExplosionCondition.survivesExplosion())
+                        .setRolls(ConstantValue.exactly(1.0F))
+                        .add(
+                                LootItem.lootTableItem(block)
                                         .apply(
-                                                CopyComponentsLootFunction.blockEntity(LootContextParameters.BLOCK_ENTITY)
-                                                        .include(DataComponentTypes.CUSTOM_NAME)
+                                                CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
+                                                        .include(DataComponents.CUSTOM_NAME)
                                                         .include(IntegratedCircuit.CIRCUIT_DATA)
                                         )
                         )

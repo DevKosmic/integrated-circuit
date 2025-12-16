@@ -1,7 +1,7 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
 import net.replaceitem.integratedcircuit.circuit.ComponentState;
@@ -24,7 +24,7 @@ public class AirComponent extends Component {
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
     }
 
     @Override

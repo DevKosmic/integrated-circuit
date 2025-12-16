@@ -2,10 +2,10 @@ package net.replaceitem.integratedcircuit.circuit;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.replaceitem.integratedcircuit.circuit.components.PortComponent;
 import net.replaceitem.integratedcircuit.circuit.context.ServerCircuitContext;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
@@ -59,20 +59,20 @@ public class ServerCircuit extends Circuit {
     }
     
     public void onExternalPowerChanged(FlatDirection direction, int power) {
-        power = MathHelper.clamp(power, 0, 15);
+        power = Mth.clamp(power, 0, 15);
         ComponentPos pos = PORT_POSITIONS.get(direction);
         ComponentState state = getComponentState(pos);
-        boolean isOutput = state.get(PortComponent.IS_OUTPUT);
-        if(!isOutput && state.get(PortComponent.POWER) != power) {
-            setComponentState(pos, state.with(PortComponent.POWER, power), Component.NOTIFY_ALL);
+        boolean isOutput = state.getValue(PortComponent.IS_OUTPUT);
+        if(!isOutput && state.getValue(PortComponent.POWER) != power) {
+            setComponentState(pos, state.setValue(PortComponent.POWER, power), Component.NOTIFY_ALL);
         }
     }
 
     public int getPortOutputStrength(FlatDirection direction) {
         ComponentPos pos = PORT_POSITIONS.get(direction);
         ComponentState state = getComponentState(pos);
-        if(!state.get(PortComponent.IS_OUTPUT)) return 0;
-        return state.get(PortComponent.POWER);
+        if(!state.getValue(PortComponent.IS_OUTPUT)) return 0;
+        return state.getValue(PortComponent.POWER);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ServerCircuit extends Circuit {
     }
 
     @Override
-    public void playSoundInternal(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch) {
+    public void playSoundInternal(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch) {
         this.context.playSound(except, sound, category, volume, pitch);
     }
 

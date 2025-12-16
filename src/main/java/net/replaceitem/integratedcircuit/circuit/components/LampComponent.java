@@ -1,12 +1,11 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -22,11 +21,11 @@ public class LampComponent extends Component {
     public static final Identifier TOOL_TEXTURE = IntegratedCircuit.id("toolbox/icons/lamp");
     public static final Identifier TEXTURE_ON = IntegratedCircuit.id("textures/integrated_circuit/lamp_on.png");
 
-    public static final BooleanProperty LIT = Properties.LIT;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     public LampComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(LIT, false));
+        this.setDefaultState(this.getStateManager().any().setValue(LIT, false));
     }
 
     @Override
@@ -40,25 +39,25 @@ public class LampComponent extends Component {
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        Identifier texture = state.get(LIT) ? TEXTURE_ON : ITEM_TEXTURE;
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        Identifier texture = state.getValue(LIT) ? TEXTURE_ON : ITEM_TEXTURE;
         IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, 0, a);
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return IntegratedCircuitScreen.getSignalStrengthText(state.get(LIT) ? 15 : 0);
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return IntegratedCircuitScreen.getSignalStrengthText(state.getValue(LIT) ? 15 : 0);
     }
 
     @Override
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
-        return this.getDefaultState().with(LIT, circuit.isReceivingRedstonePower(pos));
+        return this.getDefaultState().setValue(LIT, circuit.isReceivingRedstonePower(pos));
     }
 
     @Override
     public void neighborUpdate(ComponentState state, Circuit circuit, ComponentPos pos, Component sourceBlock, ComponentPos sourcePos, boolean notify) {
         if (!circuit.isClient) {
-            boolean bl = state.get(LIT);
+            boolean bl = state.getValue(LIT);
             if (bl != circuit.isReceivingRedstonePower(pos)) {
                 if (bl) {
                     circuit.scheduleBlockTick(pos, this, 4);
@@ -71,8 +70,8 @@ public class LampComponent extends Component {
     }
 
     @Override
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
-        if (state.get(LIT) && !circuit.isReceivingRedstonePower(pos)) {
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
+        if (state.getValue(LIT) && !circuit.isReceivingRedstonePower(pos)) {
             circuit.setComponentState(pos, state.cycle(LIT), Component.NOTIFY_LISTENERS);
         }
     }
@@ -83,7 +82,7 @@ public class LampComponent extends Component {
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(LIT);
     }

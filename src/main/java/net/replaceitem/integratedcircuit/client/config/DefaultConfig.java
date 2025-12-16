@@ -1,9 +1,9 @@
 package net.replaceitem.integratedcircuit.client.config;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.GameOptions;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Options;
 import net.replaceitem.integratedcircuit.mixin.KeyBindingAccessor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -23,20 +23,20 @@ public class DefaultConfig {
         }
     }
 
-    public InputUtil.Key getPlaceKeybind() {
-        GameOptions options = getGameOptions();
-        return options == null ? InputUtil.Type.MOUSE.createFromCode(GLFW.GLFW_MOUSE_BUTTON_RIGHT) : ((KeyBindingAccessor) options.useKey).getBoundKey();
+    public InputConstants.Key getPlaceKeybind() {
+        Options options = getGameOptions();
+        return options == null ? InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_RIGHT) : ((KeyBindingAccessor) options.keyUse).getKey();
     }
-    public InputUtil.Key getDestroyKeybind() {
-        GameOptions options = getGameOptions();
-        return options == null ? InputUtil.Type.MOUSE.createFromCode(GLFW.GLFW_MOUSE_BUTTON_LEFT) : ((KeyBindingAccessor) options.attackKey).getBoundKey();
+    public InputConstants.Key getDestroyKeybind() {
+        Options options = getGameOptions();
+        return options == null ? InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_LEFT) : ((KeyBindingAccessor) options.keyAttack).getKey();
     }
-    public InputUtil.Key getPickKeybind() {
-        GameOptions options = getGameOptions();
-        return options == null ? InputUtil.Type.MOUSE.createFromCode(GLFW.GLFW_MOUSE_BUTTON_MIDDLE) : ((KeyBindingAccessor) options.pickItemKey).getBoundKey();
+    public InputConstants.Key getPickKeybind() {
+        Options options = getGameOptions();
+        return options == null ? InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_MIDDLE) : ((KeyBindingAccessor) options.keyPickItem).getKey();
     }
-    public InputUtil.Key getRotateKeybind() {
-        return InputUtil.Type.KEYSYM.createFromCode(GLFW.GLFW_KEY_R);
+    public InputConstants.Key getRotateKeybind() {
+        return InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_R);
     }
     public ScrollBehaviour getScrollBehaviour() {
         return ScrollBehaviour.ROTATE;
@@ -66,8 +66,8 @@ public class DefaultConfig {
     
     
     @Nullable
-    public static GameOptions getGameOptions() {
-        MinecraftClient client = MinecraftClient.getInstance();
+    public static Options getGameOptions() {
+        Minecraft client = Minecraft.getInstance();
         if(client == null) return null;
         return client.options;
     }

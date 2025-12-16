@@ -1,17 +1,21 @@
 package net.replaceitem.integratedcircuit.client.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.input.KeyInput;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.*;
 import net.replaceitem.integratedcircuit.circuit.components.FacingComponent;
@@ -62,16 +66,16 @@ public class IntegratedCircuitScreen extends Screen {
     protected int titleX, titleY;
 
     protected Toolbox toolbox;
-    protected TextFieldWidget customNameTextField;
+    protected EditBox customNameTextField;
 
-    protected Text customName;
+    protected Component customName;
     protected final ClientCircuit circuit;
 
     private FlatDirection cursorRotation = FlatDirection.NORTH;
     private @Nullable ComponentState cursorState = null;
 
-    public IntegratedCircuitScreen(ClientCircuit circuit, Text customName) {
-        super(Text.translatable("integrated_circuit.gui.screen_title"));
+    public IntegratedCircuitScreen(ClientCircuit circuit, Component customName) {
+        super(Component.translatable("integrated_circuit.gui.screen_title"));
 
         this.circuit = circuit;
         this.customName = customName;
@@ -88,8 +92,8 @@ public class IntegratedCircuitScreen extends Screen {
         this.toolbox.init();
         this.toolbox.registerToolSelectionSubscriber(this::updateToolSelection);
 
-        this.customNameTextField = new TextFieldWidget(
-            this.textRenderer,
+        this.customNameTextField = new EditBox(
+            this.font,
             this.x + CIRCUIT_NAME_TEXTBOX_X,
             this.y + CIRCUIT_NAME_TEXTBOX_Y,
             CIRCUIT_NAME_TEXTBOX_WIDTH,
@@ -106,24 +110,24 @@ public class IntegratedCircuitScreen extends Screen {
             }
         };
 
-        this.customNameTextField.setDrawsBackground(false);
+        this.customNameTextField.setBordered(false);
         this.customNameTextField.setMaxLength(50);
         this.customNameTextField.setEditable(true);
-        this.customNameTextField.setText(this.customName.getString());
+        this.customNameTextField.setValue(this.customName.getString());
 
-        this.customNameTextField.setPlaceholder(
-            Text.translatable("integrated_circuit.gui.rename_field_placeholder")
-                .styled(style ->
+        this.customNameTextField.setHint(
+            Component.translatable("integrated_circuit.gui.rename_field_placeholder")
+                .withStyle(style ->
                         style.withColor(0x9C9C9C)
                              .withShadowColor(0x22222222))
         );
 
-        this.customNameTextField.setChangedListener(
-            name -> this.customName = Text.literal(name)
+        this.customNameTextField.setResponder(
+            name -> this.customName = Component.literal(name)
         );
 
-        this.addSelectableChild(this.customNameTextField);
-        this.addDrawableChild(this.customNameTextField);
+        this.addWidget(this.customNameTextField);
+        this.addRenderableWidget(this.customNameTextField);
     }
 
     public void updateToolSelection(ToolSelectionInfo selectionInfo) {
@@ -131,14 +135,14 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public boolean shouldPause() {
+    public boolean isPauseScreen() {
         return false;
     }
 
     @Override
-    public void close() {
+    public void onClose() {
         ClientPlayNetworking.send(new FinishEditingC2SPacket(this.circuit.getContext().getBlockPos()));
-        super.close();
+        super.onClose();
     }
 
     public ClientCircuit getClientCircuit() {
@@ -146,19 +150,19 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext drawContext, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
         super.render(drawContext, mouseX, mouseY, delta);
-        drawContext.drawText(this.textRenderer, this.title, this.titleX, this.titleY, Colors.DARK_GRAY, false);
+        drawContext.drawString(this.font, this.title, this.titleX, this.titleY, CommonColors.DARK_GRAY, false);
         this.renderStatusBar(drawContext, mouseX, mouseY);
         this.renderContent(drawContext);
         this.renderCursorState(drawContext, mouseX, mouseY);
     }
 
     @Override
-    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
 
-        context.drawTexture(
+        context.blit(
             RenderPipelines.GUI_TEXTURED,
             BACKGROUND_TEXTURE,
             x, y,
@@ -170,23 +174,23 @@ public class IntegratedCircuitScreen extends Screen {
         );
     }
 
-    private void renderStatusBar(DrawContext drawContext, int mouseX, int mouseY) {
+    private void renderStatusBar(GuiGraphics drawContext, int mouseX, int mouseY) {
         ComponentPos pos = getComponentPosAt(mouseX, mouseY);
         ComponentState componentState = circuit.getComponentState(pos);
-        Component component = componentState.getComponent();
+        net.replaceitem.integratedcircuit.circuit.Component component = componentState.getComponent();
 
         int gridX = getGridXAt(mouseX);
         int gridY = getGridYAt(mouseY);
 
-        Text leftSideText = null;
-        Text rightSideText = null;
+        Component leftSideText = null;
+        Component rightSideText = null;
 
         if (circuit.isInside(pos)) {
             String componentName = component != Components.AIR
                 ? component.getName().getString()
                 : "";
 
-            leftSideText = Text.literal(
+            leftSideText = Component.literal(
                 String.format(
                     "(%d, %d) %s",
                     gridX,
@@ -203,53 +207,53 @@ public class IntegratedCircuitScreen extends Screen {
         }
 
         if (leftSideText != null) {
-            drawContext.drawText(
-                this.textRenderer,
+            drawContext.drawString(
+                this.font,
                 leftSideText,
                 this.x + STATUSBAR_X,
                 this.y + STATUSBAR_Y,
-                Colors.DARK_GRAY,
+                CommonColors.DARK_GRAY,
                 false
             );
         }
 
         if (rightSideText != null) {
-            int componentInfoWidth = this.textRenderer.getWidth(rightSideText);
+            int componentInfoWidth = this.font.width(rightSideText);
 
-            drawContext.drawText(
-                this.textRenderer,
+            drawContext.drawString(
+                this.font,
                 rightSideText,
                 this.x + BACKGROUND_WIDTH - componentInfoWidth - STATUSBAR_RIGHT_MARGIN,
                 this.y + STATUSBAR_Y,
-                Colors.DARK_GRAY,
+                CommonColors.DARK_GRAY,
                 false
             );
         }
     }
 
-    public static Text getSignalStrengthText(int signalStrength) {
-        int color = RedstoneWireBlock.getWireColor(signalStrength);
-        return Text.literal(String.valueOf(signalStrength)).styled(style -> style.withColor(color));
+    public static Component getSignalStrengthText(int signalStrength) {
+        int color = RedStoneWireBlock.getColorForPower(signalStrength);
+        return Component.literal(String.valueOf(signalStrength)).withStyle(style -> style.withColor(color));
     }
 
-    private void renderCursorState(DrawContext drawContext, int mouseX, int mouseY) {
+    private void renderCursorState(GuiGraphics drawContext, int mouseX, int mouseY) {
         ComponentPos pos = getComponentPosAt(mouseX, mouseY);
         boolean validSpot = circuit.getComponentState(pos).isAir();
         float a = validSpot ? 0.5f : 0.2f;
         if (this.cursorState != null && circuit.isInside(pos)) {
-            drawContext.getMatrices().pushMatrix();
-            drawContext.getMatrices().translate(getGridPosX(0), getGridPosY(0));
-            drawContext.getMatrices().scale(RENDER_SCALE, RENDER_SCALE);
+            drawContext.pose().pushMatrix();
+            drawContext.pose().translate(getGridPosX(0), getGridPosY(0));
+            drawContext.pose().scale(RENDER_SCALE, RENDER_SCALE);
             renderComponentStateInGrid(drawContext, this.cursorState, pos.getX(), pos.getY(), a);
-            drawContext.getMatrices().popMatrix();
+            drawContext.pose().popMatrix();
         }
     }
 
-    protected void renderContent(DrawContext drawContext) {
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().translate(getGridPosX(0), getGridPosY(0));
+    protected void renderContent(GuiGraphics drawContext) {
+        drawContext.pose().pushMatrix();
+        drawContext.pose().translate(getGridPosX(0), getGridPosY(0));
 
-        drawContext.getMatrices().scale(RENDER_SCALE, RENDER_SCALE);
+        drawContext.pose().scale(RENDER_SCALE, RENDER_SCALE);
 
         for (FlatDirection direction : FlatDirection.VALUES) {
             ComponentState port = circuit.getPorts()[direction.getIndex()];
@@ -264,55 +268,55 @@ public class IntegratedCircuitScreen extends Screen {
             }
         }
 
-        drawContext.getMatrices().popMatrix();
+        drawContext.pose().popMatrix();
     }
 
-    protected static void renderComponentState(DrawContext drawContext, ComponentState state, int x, int y, float a) {
+    protected static void renderComponentState(GuiGraphics drawContext, ComponentState state, int x, int y, float a) {
         state.getComponent().render(drawContext, x, y, a, state);
     }
 
-    protected void renderComponentStateInGrid(DrawContext drawContext, ComponentState state, int x, int y, float a) {
+    protected void renderComponentStateInGrid(GuiGraphics drawContext, ComponentState state, int x, int y, float a) {
         renderComponentState(drawContext, state, x * COMPONENT_SIZE, y * COMPONENT_SIZE, a);
     }
 
-    public static void renderComponentTexture(DrawContext drawContext, Identifier component, int x, int y, int rot, float alpha) {
-        renderComponentTexture(drawContext, component, x, y, rot, ColorHelper.getWhite(alpha));
+    public static void renderComponentTexture(GuiGraphics drawContext, Identifier component, int x, int y, int rot, float alpha) {
+        renderComponentTexture(drawContext, component, x, y, rot, ARGB.white(alpha));
     }
 
-    public static void renderComponentTexture(DrawContext drawContext, Identifier component, int x, int y, int rot, int color) {
+    public static void renderComponentTexture(GuiGraphics drawContext, Identifier component, int x, int y, int rot, int color) {
         renderComponentTexture(drawContext, component, x, y, rot, color, 0, 0, 16, 16);
     }
 
-    public static void renderComponentTexture(DrawContext drawContext, Identifier component, int x, int y, int rot, int color, int u, int v, int w, int h) {
+    public static void renderComponentTexture(GuiGraphics drawContext, Identifier component, int x, int y, int rot, int color, int u, int v, int w, int h) {
         renderPartialTexture(drawContext, component, x, y, u, v, 16, 16, rot, color, u, v, w, h);
     }
 
 
-    public static void renderPartialTexture(DrawContext drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, float alpha) {
-        renderPartialTexture(drawContext, texture, componentX, componentY, x, y, textureW, textureH, rot, ColorHelper.getWhite(alpha));
+    public static void renderPartialTexture(GuiGraphics drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, float alpha) {
+        renderPartialTexture(drawContext, texture, componentX, componentY, x, y, textureW, textureH, rot, ARGB.white(alpha));
     }
 
-    public static void renderPartialTexture(DrawContext drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, int color) {
+    public static void renderPartialTexture(GuiGraphics drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, int color) {
         renderPartialTexture(drawContext, texture, componentX, componentY, x, y, textureW, textureH, rot, color, 0, 0, textureW, textureH);
     }
 
-    private static void renderPartialTexture(DrawContext drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, int color, int u, int v, int w, int h) {
-        drawContext.getMatrices().pushMatrix();
-        drawContext.getMatrices().translate(componentX + 8, componentY + 8);
-        drawContext.getMatrices().rotate((float) (rot * Math.PI * 0.5));
-        drawContext.getMatrices().translate(-8, -8);
-        drawContext.drawTexture(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, w, h, textureW, textureH, color);
-        drawContext.getMatrices().popMatrix();
+    private static void renderPartialTexture(GuiGraphics drawContext, Identifier texture, int componentX, int componentY, int x, int y, int textureW, int textureH, int rot, int color, int u, int v, int w, int h) {
+        drawContext.pose().pushMatrix();
+        drawContext.pose().translate(componentX + 8, componentY + 8);
+        drawContext.pose().rotate((float) (rot * Math.PI * 0.5));
+        drawContext.pose().translate(-8, -8);
+        drawContext.blit(RenderPipelines.GUI_TEXTURED, texture, x, y, u, v, w, h, textureW, textureH, color);
+        drawContext.pose().popMatrix();
     }
 
     @Override
-    public <T extends Element & Drawable & Selectable> T addDrawableChild(T drawableElement) {
-        return super.addDrawableChild(drawableElement);
+    public <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T drawableElement) {
+        return super.addRenderableWidget(drawableElement);
     }
 
     @Override
-    public boolean mouseClicked(Click click, boolean doubled) {
-        if (this.client == null)
+    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
+        if (this.minecraft == null)
             return false;
 
         ComponentPos clickedPos = getComponentPosAt((int) click.x(), (int) click.y());
@@ -341,7 +345,7 @@ public class IntegratedCircuitScreen extends Screen {
                     placeComponent(clickedPos);
                     startedDraggingInside = true;
                 } else {
-                    circuit.useComponent(clickedPos, this.client.player);
+                    circuit.useComponent(clickedPos, this.minecraft.player);
                 }
                 return true;
             }
@@ -354,14 +358,14 @@ public class IntegratedCircuitScreen extends Screen {
 
             if (isPick) {
                 ComponentState state = circuit.getComponentState(clickedPos);
-                Component component = state.getComponent();
+                net.replaceitem.integratedcircuit.circuit.Component component = state.getComponent();
                 selectPalette(component);
 
                 return true;
             }
         } else {
             if (isPlace && Circuit.isPortPos(clickedPos)) {
-                circuit.useComponent(clickedPos, this.client.player);
+                circuit.useComponent(clickedPos, this.minecraft.player);
                 return true;
             }
         }
@@ -385,7 +389,7 @@ public class IntegratedCircuitScreen extends Screen {
         }
     }
 
-    private void selectPalette(Component component) {
+    private void selectPalette(net.replaceitem.integratedcircuit.circuit.Component component) {
         selectPalette(toolbox.getComponentIndex(component));
     }
 
@@ -397,12 +401,12 @@ public class IntegratedCircuitScreen extends Screen {
         toolbox.deselectTool();
     }
 
-    private void updateCursorState(@Nullable Component component) {
+    private void updateCursorState(@Nullable net.replaceitem.integratedcircuit.circuit.Component component) {
         if (component != null) {
             this.cursorState = component.getDefaultState();
 
             if (component instanceof FacingComponent) {
-                this.cursorState = this.cursorState.with(
+                this.cursorState = this.cursorState.setValue(
                     FacingComponent.FACING,
                     this.cursorRotation
                 );
@@ -412,15 +416,15 @@ public class IntegratedCircuitScreen extends Screen {
         }
     }
 
-    public void updateCustomNameForExternalChange(Text customName) {
+    public void updateCustomNameForExternalChange(Component customName) {
         if (!this.customNameTextField.isFocused()) {
-            this.customNameTextField.setText(customName.getString());
+            this.customNameTextField.setValue(customName.getString());
         }
     }
 
     @Override
-    public boolean mouseDragged(Click click, double offsetX, double offsetY) {
-        if (startedDraggingInside && this.client != null) {
+    public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
+        if (startedDraggingInside && this.minecraft != null) {
             ComponentPos mousePos = getComponentPosAt((int) click.x(), (int) click.y());
             if (circuit.isInside(mousePos)) {
                 boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), click.button());
@@ -440,7 +444,7 @@ public class IntegratedCircuitScreen extends Screen {
     private void rotateComponent(int amount) {
         if (this.cursorState != null && this.cursorState.getComponent() instanceof FacingComponent) {
             this.cursorRotation = this.cursorRotation.rotated(amount);
-            this.cursorState = this.cursorState.with(FacingComponent.FACING, this.cursorRotation);
+            this.cursorState = this.cursorState.setValue(FacingComponent.FACING, this.cursorRotation);
         }
     }
 
@@ -458,24 +462,24 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(KeyInput input) {
+    public boolean keyPressed(KeyEvent input) {
         if (this.customNameTextField.isFocused()) {
-            if (input.isEnter() || input.isEscape()) {
+            if (input.isConfirmation() || input.isEscape()) {
                 customNameTextField.setFocused(false);
                 return true;
             }
         }
 
-        if (matchesKey(DefaultConfig.config.getRotateKeybind(), input.getKeycode(), input.scancode())) {
+        if (matchesKey(DefaultConfig.config.getRotateKeybind(), input.input(), input.scancode())) {
             rotateComponent(1);
             return true;
         }
 
-        if (input.getKeycode() >= GLFW.GLFW_KEY_0 && input.getKeycode() <= GLFW.GLFW_KEY_9) {
-            if (input.getKeycode() == GLFW.GLFW_KEY_0) {
+        if (input.input() >= GLFW.GLFW_KEY_0 && input.input() <= GLFW.GLFW_KEY_9) {
+            if (input.input() == GLFW.GLFW_KEY_0) {
                 deselectPalette();
             } else {
-                selectPalette(input.getKeycode() - GLFW.GLFW_KEY_1);
+                selectPalette(input.input() - GLFW.GLFW_KEY_1);
             }
             return true;
         }
@@ -510,15 +514,15 @@ public class IntegratedCircuitScreen extends Screen {
         return new ComponentPos(getGridXAt(pixelX), getGridYAt(pixelY));
     }
 
-    public static boolean matchesMouse(InputUtil.Key key, int button) {
-        return key.getCategory() == InputUtil.Type.MOUSE && key.getCode() == button;
+    public static boolean matchesMouse(InputConstants.Key key, int button) {
+        return key.getType() == InputConstants.Type.MOUSE && key.getValue() == button;
     }
 
-    public static boolean matchesKey(InputUtil.Key key, int keyCode, int scanCode) {
-        if (keyCode == InputUtil.UNKNOWN_KEY.getCode()) {
-            return key.getCategory() == InputUtil.Type.SCANCODE && key.getCode() == scanCode;
+    public static boolean matchesKey(InputConstants.Key key, int keyCode, int scanCode) {
+        if (keyCode == InputConstants.UNKNOWN.getValue()) {
+            return key.getType() == InputConstants.Type.SCANCODE && key.getValue() == scanCode;
         }
-        return key.getCategory() == InputUtil.Type.KEYSYM && key.getCode() == keyCode;
+        return key.getType() == InputConstants.Type.KEYSYM && key.getValue() == keyCode;
     }
 
 }

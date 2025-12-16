@@ -4,9 +4,9 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
-import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.client.render.BlockRenderLayer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
 import net.replaceitem.integratedcircuit.client.config.DefaultConfig;
@@ -19,20 +19,20 @@ import net.replaceitem.integratedcircuit.util.FlatDirection;
 public class IntegratedCircuitClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        BlockRenderLayerMap.putBlocks(BlockRenderLayer.CUTOUT_MIPPED, IntegratedCircuit.Blocks.CIRCUITS);
+        BlockRenderLayerMap.putBlocks(ChunkSectionLayer.CUTOUT, IntegratedCircuit.Blocks.CIRCUITS);
 
         ColorProviderRegistry.BLOCK.register((state, view, pos, tintIndex) -> {
             if(view == null || pos == null || !(state.getBlock() instanceof IntegratedCircuitBlock block) || tintIndex > 3)
-                return RedstoneWireBlock.getWireColor(0);
+                return RedStoneWireBlock.getColorForPower(0);
 
             FlatDirection circuitDirection = FlatDirection.VALUES[tintIndex];
 
-            return RedstoneWireBlock.getWireColor(
+            return RedStoneWireBlock.getColorForPower(
                 block.getPortRenderStrength(view, pos, circuitDirection)
             );
         }, IntegratedCircuit.Blocks.CIRCUITS);
         
-        BlockEntityRendererFactories.register(IntegratedCircuit.INTEGRATED_CIRCUIT_BLOCK_ENTITY, IntegratedCircuitBlockEntityRenderer::new);
+        BlockEntityRenderers.register(IntegratedCircuit.INTEGRATED_CIRCUIT_BLOCK_ENTITY, IntegratedCircuitBlockEntityRenderer::new);
 
         DefaultConfig.initialize();
 

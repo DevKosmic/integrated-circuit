@@ -12,7 +12,7 @@ public class ClientPacketHandler {
         context.client().setScreen(
             new IntegratedCircuitScreen(
                 packet.getClientCircuit(
-                    context.client().world,
+                    context.client().level,
                     packet.pos()
                 ),
                 packet.customName()
@@ -21,13 +21,13 @@ public class ClientPacketHandler {
     }
 
     public static void receiveCircuitNameUpdatePacket(CircuitNameUpdateS2CPacket packet, ClientPlayNetworking.Context context) {
-        if (context.client().currentScreen instanceof IntegratedCircuitScreen integratedCircuitScreen) {
+        if (context.client().screen instanceof IntegratedCircuitScreen integratedCircuitScreen) {
             integratedCircuitScreen.updateCustomNameForExternalChange(packet.newName());
         }
     }
 
     public static void receiveComponentUpdatePacket(ComponentUpdateS2CPacket packet, ClientPlayNetworking.Context context) {
-        if (context.client().currentScreen instanceof IntegratedCircuitScreen integratedCircuitScreen) {
+        if (context.client().screen instanceof IntegratedCircuitScreen integratedCircuitScreen) {
             integratedCircuitScreen.getClientCircuit().onComponentUpdateFromServer(
                 packet.state(),
                 packet.pos()

@@ -1,12 +1,12 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -23,12 +23,12 @@ public class CopperBulbComponent extends Component {
     private static final Identifier TEXTURE_POWERED = IntegratedCircuit.id("textures/integrated_circuit/copper_bulb_powered.png");
     private static final Identifier TEXTURE_LIT_POWERED = IntegratedCircuit.id("textures/integrated_circuit/copper_bulb_lit_powered.png");
 
-    public static final BooleanProperty LIT = Properties.LIT;
-    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public CopperBulbComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(LIT, false).with(POWERED, false));
+        this.setDefaultState(this.getStateManager().any().setValue(LIT, false).setValue(POWERED, false));
     }
 
     @Override
@@ -46,8 +46,8 @@ public class CopperBulbComponent extends Component {
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, getTexture(state.get(LIT), state.get(POWERED)), x, y, 0, a);
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, getTexture(state.getValue(LIT), state.getValue(POWERED)), x, y, 0, a);
     }
 
     @Override
@@ -66,14 +66,14 @@ public class CopperBulbComponent extends Component {
 
     public void update(ComponentState state, ServerCircuit circuit, ComponentPos pos) {
         boolean receivingPower = circuit.isReceivingRedstonePower(pos);
-        if (receivingPower != state.get(POWERED)) {
+        if (receivingPower != state.getValue(POWERED)) {
             ComponentState newState = state;
             if (receivingPower) {
                 newState = newState.cycle(LIT);
-                circuit.playSound(null, newState.get(LIT) ? SoundEvents.BLOCK_COPPER_BULB_TURN_ON : SoundEvents.BLOCK_COPPER_BULB_TURN_OFF, SoundCategory.BLOCKS, 1, 1);
+                circuit.playSound(null, newState.getValue(LIT) ? SoundEvents.COPPER_BULB_TURN_ON : SoundEvents.COPPER_BULB_TURN_OFF, SoundSource.BLOCKS, 1, 1);
             }
 
-            circuit.setComponentState(pos, newState.with(POWERED, receivingPower), NOTIFY_ALL);
+            circuit.setComponentState(pos, newState.setValue(POWERED, receivingPower), NOTIFY_ALL);
         }
     }
 
@@ -89,11 +89,11 @@ public class CopperBulbComponent extends Component {
 
     @Override
     public int getComparatorOutput(ComponentState state, Circuit circuit, ComponentPos pos) {
-        return state.get(LIT) ? 15 : 0;
+        return state.getValue(LIT) ? 15 : 0;
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(LIT, POWERED);
     }

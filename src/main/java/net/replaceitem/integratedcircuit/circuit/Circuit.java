@@ -3,12 +3,12 @@ package net.replaceitem.integratedcircuit.circuit;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.EnumHashBiMap;
 import com.mojang.serialization.Codec;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.replaceitem.integratedcircuit.circuit.components.PortComponent;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
@@ -37,7 +37,7 @@ public abstract class Circuit implements CircuitAccess {
     protected final CircuitNeighborUpdater neighborUpdater = new CircuitNeighborUpdater(this);
     
     /**
-     * @see net.minecraft.world.World#isClient
+     * @see net.minecraft.world.level.Level#isClientSide()
      */
     public final boolean isClient;
     private long tickOrder;
@@ -65,7 +65,7 @@ public abstract class Circuit implements CircuitAccess {
     public static ComponentState[] createDefaultPorts() {
         ComponentState[] ports = new ComponentState[PORT_COUNT];
         for (int i = 0; i < ports.length; i++) {
-            ports[i] = Components.PORT.getDefaultState().with(PortComponent.FACING, FlatDirection.VALUES[i].getOpposite());
+            ports[i] = Components.PORT.getDefaultState().setValue(PortComponent.FACING, FlatDirection.VALUES[i].getOpposite());
         }
         return ports;
     }
@@ -94,7 +94,7 @@ public abstract class Circuit implements CircuitAccess {
     /**
      * Handles directly setting the component state, without any updates.
      * Assumes {@code pos} is already valid
-     * Equivalent to {@link net.minecraft.world.chunk.ChunkSection#setBlockState(int, int, int, BlockState)}
+     * Equivalent to {@link net.minecraft.world.level.chunk.LevelChunkSection#setBlockState(int, int, int, BlockState)}
      * @return The old component state before placement.
      */
     protected ComponentState assignComponentState(ComponentPos pos, ComponentState state) {
@@ -114,7 +114,7 @@ public abstract class Circuit implements CircuitAccess {
     }
 
     /**
-     * @see net.minecraft.world.World#setBlockState(BlockPos, BlockState, int)
+     * @see net.minecraft.world.level.Level#setBlock(BlockPos, BlockState, int)
      */
     public boolean setComponentState(ComponentPos pos, ComponentState state, int flags, int maxUpdateDepth) {
         if(!isValidPos(pos)) return false;
@@ -134,7 +134,7 @@ public abstract class Circuit implements CircuitAccess {
 
         ComponentState placedComponentState = this.getComponentState(pos);
         if (placedComponentState == state) {
-            if ((flags & Block.NOTIFY_LISTENERS) != 0 && (!this.isClient || (flags & Block.NO_REDRAW) == 0)) {
+            if ((flags & Block.UPDATE_CLIENTS) != 0 && (!this.isClient || (flags & Block.UPDATE_INVISIBLE) == 0)) {
                 this.updateListeners(pos, oldState, state, flags);
             }
             if ((flags & Component.NOTIFY_NEIGHBORS) != 0) {
@@ -143,8 +143,8 @@ public abstract class Circuit implements CircuitAccess {
                     this.updateComparators(pos, state.getComponent());
                 }
             }
-            if ((flags & Block.FORCE_STATE) == 0 && maxUpdateDepth > 0) {
-                int i = flags & ~(Block.NOTIFY_NEIGHBORS | Block.SKIP_DROPS);
+            if ((flags & Block.UPDATE_KNOWN_SHAPE) == 0 && maxUpdateDepth > 0) {
+                int i = flags & ~(Block.UPDATE_NEIGHBORS | Block.UPDATE_SUPPRESS_DROPS);
                 oldState.prepare(this, pos, i, maxUpdateDepth - 1);
                 state.updateNeighbors(this, pos, i, maxUpdateDepth - 1);
                 state.prepare(this, pos, i, maxUpdateDepth - 1);
@@ -163,7 +163,7 @@ public abstract class Circuit implements CircuitAccess {
 
     public boolean isEmpty() {
         for (int i = 0; i < ports.length; i++) {
-            if(ports[i].get(PortComponent.FACING) != FlatDirection.VALUES[i].getOpposite()) {
+            if(ports[i].getValue(PortComponent.FACING) != FlatDirection.VALUES[i].getOpposite()) {
                 return false;
             }
         }
@@ -239,7 +239,7 @@ public abstract class Circuit implements CircuitAccess {
         return this.getEmittedRedstonePower(pos.east(), FlatDirection.EAST) > 0;
     }
 
-    public void useComponent(ComponentPos pos, PlayerEntity player) {
+    public void useComponent(ComponentPos pos, Player player) {
         ComponentState state = this.getComponentState(pos);
         state.onUse(this, pos, player);
     }
@@ -262,10 +262,10 @@ public abstract class Circuit implements CircuitAccess {
 
 
     /**
-     * @see net.minecraft.world.World#removeBlock(BlockPos, boolean)
+     * @see net.minecraft.world.level.Level#removeBlock(BlockPos, boolean)
      */
     public boolean removeBlock(ComponentPos pos) {
-        return this.setComponentState(pos, Components.AIR_DEFAULT_STATE, Block.NOTIFY_ALL);
+        return this.setComponentState(pos, Components.AIR_DEFAULT_STATE, Block.UPDATE_ALL);
     }
 
     public abstract void placeComponentState(ComponentPos pos, Component component, FlatDirection placementRotation);
@@ -276,7 +276,7 @@ public abstract class Circuit implements CircuitAccess {
 
 
     /**
-     * @see net.minecraft.world.World#breakBlock(BlockPos, boolean)
+     * @see net.minecraft.world.level.Level#destroyBlock(BlockPos, boolean)
      */
     public boolean breakBlock(ComponentPos pos) {
         return breakBlock(pos, 512);
@@ -290,9 +290,9 @@ public abstract class Circuit implements CircuitAccess {
         return this.setComponentState(pos, Components.AIR_DEFAULT_STATE, Component.NOTIFY_ALL, maxUpdateDepth);
     }
     
-    public final void playSound(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch) {
+    public final void playSound(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch) {
         playSoundInternal(except, sound, category, volume, pitch * 1.6f);
     }
     
-    protected abstract void playSoundInternal(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch);
+    protected abstract void playSoundInternal(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch);
 }

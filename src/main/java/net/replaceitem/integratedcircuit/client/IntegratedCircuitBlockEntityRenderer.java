@@ -1,28 +1,27 @@
 package net.replaceitem.integratedcircuit.client;
 
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactory;
-import net.minecraft.client.render.command.ModelCommandRenderer;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Colors;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.CommonColors;
+import net.minecraft.world.phys.Vec3;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlockEntity;
 import net.replaceitem.integratedcircuit.client.config.DefaultConfig;
-import org.jetbrains.annotations.Nullable;
 
 public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer<IntegratedCircuitBlockEntity, IntegratedCircuitBlockEntityRenderState> {
-    private final TextRenderer textRenderer;
+    private final Font textRenderer;
     private static final float MAX_WIDTH = 7f/16; // black circuit box is 8 pixels, plus margin
     private static final float MAX_HEIGHT = 5f/16;
     
-    public IntegratedCircuitBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
-        this.textRenderer = ctx.textRenderer();
+    public IntegratedCircuitBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
+        this.textRenderer = ctx.font();
     }
 
     @Override
@@ -31,26 +30,26 @@ public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer
     }
 
     @Override
-    public void updateRenderState(IntegratedCircuitBlockEntity blockEntity, IntegratedCircuitBlockEntityRenderState state, float tickProgress, Vec3d cameraPos, @Nullable ModelCommandRenderer.CrumblingOverlayCommand crumblingOverlay) {
-        BlockEntityRenderer.super.updateRenderState(blockEntity, state, tickProgress, cameraPos, crumblingOverlay);
+    public void extractRenderState(IntegratedCircuitBlockEntity blockEntity, IntegratedCircuitBlockEntityRenderState state, float tickProgress, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
+        BlockEntityRenderer.super.extractRenderState(blockEntity, state, tickProgress, cameraPos, crumblingOverlay);
         state.customName = blockEntity.getCustomName();
     }
 
     @Override
-    public void render(IntegratedCircuitBlockEntityRenderState state, MatrixStack matrices, OrderedRenderCommandQueue queue, CameraRenderState cameraState) {
+    public void submit(IntegratedCircuitBlockEntityRenderState state, PoseStack matrices, SubmitNodeCollector queue, CameraRenderState cameraState) {
         if(!DefaultConfig.config.getRenderCircuitName()) return;
-        Direction facing = state.blockState.get(IntegratedCircuitBlock.FACING);
-        Text customName = state.customName;
+        Direction facing = state.blockState.getValue(IntegratedCircuitBlock.FACING);
+        Component customName = state.customName;
         if (customName == null) return;
 
-        matrices.push();
+        matrices.pushPose();
         matrices.translate(0.5F, 3f/16+0.001f, 0.5F);
-        matrices.multiply(facing.getRotationQuaternion());
-        int light = state.lightmapCoordinates;
-        int textWidth = textRenderer.getWidth(customName);
-        float scale = Math.min(MAX_WIDTH / textWidth, MAX_HEIGHT / textRenderer.fontHeight);
+        matrices.mulPose(facing.getRotation());
+        int light = state.lightCoords;
+        int textWidth = textRenderer.width(customName);
+        float scale = Math.min(MAX_WIDTH / textWidth, MAX_HEIGHT / textRenderer.lineHeight);
         matrices.scale(-scale, -scale, scale);
-        queue.submitText(matrices, (float) -textWidth / 2, (float) -textRenderer.fontHeight /2, customName.asOrderedText(), false, TextRenderer.TextLayerType.POLYGON_OFFSET, light, Colors.WHITE, 0, 0);
-        matrices.pop();
+        queue.submitText(matrices, (float) -textWidth / 2, (float) -textRenderer.lineHeight /2, customName.getVisualOrderText(), false, Font.DisplayMode.POLYGON_OFFSET, light, CommonColors.WHITE, 0, 0);
+        matrices.popPose();
     }
 }

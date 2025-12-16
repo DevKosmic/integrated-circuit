@@ -1,15 +1,14 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.block.RedstoneWireBlock;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -25,12 +24,12 @@ public class PortComponent extends AbstractWireComponent {
     private static final Identifier TEXTURE_ARROW = IntegratedCircuit.id("textures/integrated_circuit/port.png");
 
     public static final EnumProperty<FlatDirection> FACING = FacingComponent.FACING;
-    public static final IntProperty POWER = Properties.POWER;
-    public static final BooleanProperty IS_OUTPUT = BooleanProperty.of("is_output");
+    public static final IntegerProperty POWER = BlockStateProperties.POWER;
+    public static final BooleanProperty IS_OUTPUT = BooleanProperty.create("is_output");
 
     public PortComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(FACING, FlatDirection.NORTH).with(POWER, 0).with(IS_OUTPUT, false));
+        this.setDefaultState(this.getStateManager().any().setValue(FACING, FlatDirection.NORTH).setValue(POWER, 0).setValue(IS_OUTPUT, false));
     }
 
     @Override
@@ -44,11 +43,11 @@ public class PortComponent extends AbstractWireComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        int signalStrength = state.get(getPowerProperty());
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        int signalStrength = state.getValue(getPowerProperty());
 
-        return Text.translatable(
-                state.get(IS_OUTPUT)
+        return net.minecraft.network.chat.Component.translatable(
+                state.getValue(IS_OUTPUT)
                     ? "integrated_circuit.component.integrated_circuit.port_output"
                     : "integrated_circuit.component.integrated_circuit.port_input"
             )
@@ -57,10 +56,10 @@ public class PortComponent extends AbstractWireComponent {
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        int color = RedstoneWireBlock.getWireColor(state.get(POWER));
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        int color = RedStoneWireBlock.getColorForPower(state.getValue(POWER));
 
-        FlatDirection rotation = state.get(FACING);
+        FlatDirection rotation = state.getValue(FACING);
         IntegratedCircuitScreen.renderComponentTexture(drawContext, TEXTURE_ARROW, x, y, rotation.getIndex(), color);
 
         Identifier wireTexture = rotation.getAxis() == FlatDirection.Axis.X ? TEXTURE_X : TEXTURE_Y;
@@ -72,9 +71,9 @@ public class PortComponent extends AbstractWireComponent {
         if (circuit.isClient) return;
         ServerCircuitContext context = ((ServerCircuit) circuit).getContext();
         FlatDirection portSide = Circuit.getPortSide(pos);
-        boolean isOutput = state.get(IS_OUTPUT);
-        boolean wasOutput = oldState.get(IS_OUTPUT);
-        context.setRenderStrength(portSide, state.get(POWER));
+        boolean isOutput = state.getValue(IS_OUTPUT);
+        boolean wasOutput = oldState.getValue(IS_OUTPUT);
+        context.setRenderStrength(portSide, state.getValue(POWER));
         this.update(circuit, pos, state);
         this.updateAfterSignalStrengthChange(circuit, pos);
         this.updateOffsetNeighbors(circuit, pos);
@@ -83,36 +82,36 @@ public class PortComponent extends AbstractWireComponent {
     }
 
     @Override
-    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, PlayerEntity player) {
-        state = state.with(FACING, state.get(FACING).getOpposite()).cycle(IS_OUTPUT);
+    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, Player player) {
+        state = state.setValue(FACING, state.getValue(FACING).getOpposite()).cycle(IS_OUTPUT);
         circuit.setComponentState(pos, state, Component.NOTIFY_ALL);
     }
 
     @Override
     protected int getReceivedRedstonePower(Circuit circuit, ComponentPos pos) {
         ComponentState state = circuit.getComponentState(pos);
-        if (!state.get(IS_OUTPUT)) return state.get(POWER);
+        if (!state.getValue(IS_OUTPUT)) return state.getValue(POWER);
         return super.getReceivedRedstonePower(circuit, pos);
     }
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
         if (!wiresGivePower) return 0;
-        return state.get(FACING).getOpposite() == direction ? state.get(POWER) : 0;
+        return state.getValue(FACING).getOpposite() == direction ? state.getValue(POWER) : 0;
     }
 
     @Override
-    protected IntProperty getPowerProperty() {
+    protected IntegerProperty getPowerProperty() {
         return PortComponent.POWER;
     }
 
     @Override
     public int increasePower(ComponentState state, FlatDirection side) {
-        return state.get(POWER);
+        return state.getValue(POWER);
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(FACING);
         builder.add(POWER);

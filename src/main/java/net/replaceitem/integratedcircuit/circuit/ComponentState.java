@@ -3,18 +3,17 @@ package net.replaceitem.integratedcircuit.circuit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.state.State;
-import net.minecraft.state.property.Property;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.StateHolder;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
 
-public class ComponentState extends State<Component,ComponentState> {
+public class ComponentState extends StateHolder<Component, ComponentState> {
 
-    public static final Codec<ComponentState> CODEC = createCodec(IntegratedCircuit.COMPONENTS_REGISTRY.getCodec(), Component::getDefaultState).stable();
+    public static final Codec<ComponentState> CODEC = codec(IntegratedCircuit.COMPONENTS_REGISTRY.byNameCodec(), Component::getDefaultState).stable();
     
     protected ComponentState(Component owner, Reference2ObjectArrayMap<Property<?>, Comparable<?>> entries, MapCodec<ComponentState> codec) {
         super(owner, entries, codec);
@@ -32,7 +31,7 @@ public class ComponentState extends State<Component,ComponentState> {
         return this.owner == component;
     }
 
-    public void onUse(Circuit circuit, ComponentPos pos, PlayerEntity player) {
+    public void onUse(Circuit circuit, ComponentPos pos, Player player) {
         this.owner.onUse(this, circuit, pos, player);
     }
 
@@ -63,7 +62,7 @@ public class ComponentState extends State<Component,ComponentState> {
         this.owner.onStateReplaced(this, circuit, pos, newState);
     }
 
-    public void scheduledTick(ServerCircuit circuit, ComponentPos pos, Random random) {
+    public void scheduledTick(ServerCircuit circuit, ComponentPos pos, RandomSource random) {
         this.owner.scheduledTick(this, circuit, pos, random);
     }
 
@@ -98,7 +97,7 @@ public class ComponentState extends State<Component,ComponentState> {
         return this.owner.canPlaceAt(this, circuit, pos);
     }
 
-    public Text getHoverInfoText() {
+    public net.minecraft.network.chat.Component getHoverInfoText() {
         return this.owner.getHoverInfoText(this);
     }
 

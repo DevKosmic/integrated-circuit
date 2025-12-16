@@ -1,7 +1,7 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
 import com.google.common.collect.Sets;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;

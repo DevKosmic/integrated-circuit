@@ -1,19 +1,18 @@
 package net.replaceitem.integratedcircuit.client.gui.widget;
 
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.tooltip.Tooltip;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
 
 import java.time.Duration;
 
-public class ToolboxButton extends ClickableWidget {
+public class ToolboxButton extends AbstractWidget {
 
     public static final Identifier COMPONENT_BUTTON_TEXTURE_IDLE = IntegratedCircuit.id(
         "toolbox/button_bg"
@@ -34,8 +33,8 @@ public class ToolboxButton extends ClickableWidget {
     protected boolean selected;
 
     public ToolboxButton(int x, int y, Component component) {
-        super(x, y, SIZE, SIZE, Text.empty());
-        this.setTooltip(Tooltip.of(component.getName()));
+        super(x, y, SIZE, SIZE, net.minecraft.network.chat.Component.empty());
+        this.setTooltip(Tooltip.create(component.getName()));
         this.setTooltipDelay(Duration.ofMillis(700));
         this.component = component;
     }
@@ -45,7 +44,7 @@ public class ToolboxButton extends ClickableWidget {
     }
 
     @Override
-    public boolean isSelected() {
+    public boolean isHoveredOrFocused() {
         return selected;
     }
 
@@ -54,8 +53,8 @@ public class ToolboxButton extends ClickableWidget {
     }
 
     @Override
-    protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.drawGuiTexture(
+    protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+        context.blitSprite(
             RenderPipelines.GUI_TEXTURED,
             selectBackgroundTexture(),
             getX(),
@@ -70,8 +69,8 @@ public class ToolboxButton extends ClickableWidget {
             renderPaletteItem(context, toolTexture);
     }
 
-    private void renderPaletteItem(DrawContext drawContext, Identifier itemTexture) {
-        drawContext.drawGuiTexture(
+    private void renderPaletteItem(GuiGraphics drawContext, Identifier itemTexture) {
+        drawContext.blitSprite(
             RenderPipelines.GUI_TEXTURED,
             itemTexture,
             getX(),
@@ -94,12 +93,12 @@ public class ToolboxButton extends ClickableWidget {
     }
 
     @Override
-    protected void appendClickableNarrations(NarrationMessageBuilder builder) {
-        this.appendDefaultNarrations(builder);
+    protected void updateWidgetNarration(NarrationElementOutput builder) {
+        this.defaultButtonNarrationText(builder);
     }
 
     @Override
-    protected MutableText getNarrationMessage() {
-        return Text.translatable("gui.narrate.button", component.getName());
+    protected MutableComponent createNarrationMessage() {
+        return net.minecraft.network.chat.Component.translatable("gui.narrate.button", component.getName());
     }
 }

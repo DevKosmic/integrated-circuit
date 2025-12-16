@@ -1,27 +1,27 @@
 package net.replaceitem.integratedcircuit.network.packet;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 
 public record RenameCircuitC2SPacket(
-    Text newName,
+    Component newName,
     BlockPos pos
-) implements CustomPayload {
-    public static final CustomPayload.Id<RenameCircuitC2SPacket> ID = new CustomPayload.Id<>(IntegratedCircuit.id("rename_circuit_c2s_packet"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<RenameCircuitC2SPacket> ID = new CustomPacketPayload.Type<>(IntegratedCircuit.id("rename_circuit_c2s_packet"));
 
-    public static final PacketCodec<RegistryByteBuf, RenameCircuitC2SPacket> PACKET_CODEC = PacketCodec.tuple(
-        TextCodecs.PACKET_CODEC, RenameCircuitC2SPacket::newName,
-        BlockPos.PACKET_CODEC, RenameCircuitC2SPacket::pos,
+    public static final StreamCodec<RegistryFriendlyByteBuf, RenameCircuitC2SPacket> PACKET_CODEC = StreamCodec.composite(
+        ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC, RenameCircuitC2SPacket::newName,
+        BlockPos.STREAM_CODEC, RenameCircuitC2SPacket::pos,
         RenameCircuitC2SPacket::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

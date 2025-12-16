@@ -1,14 +1,11 @@
 package net.replaceitem.integratedcircuit.circuit;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.SoundType;
 import net.replaceitem.integratedcircuit.circuit.context.ClientCircuitContext;
 import net.replaceitem.integratedcircuit.network.packet.ComponentInteractionC2SPacket;
 import net.replaceitem.integratedcircuit.network.packet.PlaceComponentC2SPacket;
@@ -49,15 +46,15 @@ public class ClientCircuit extends Circuit {
         ClientPlayNetworking.send(new PlaceComponentC2SPacket(pos, this.context.getBlockPos(), component, placementRotation));
         ComponentState placementState = component.getPlacementState(this, pos, placementRotation);
         boolean breaking = component == Components.AIR;
-        BlockSoundGroup soundGroup = (breaking ? getComponentState(pos).getComponent() : component).getSettings().soundGroup;
+        SoundType soundGroup = (breaking ? getComponentState(pos).getComponent() : component).getSettings().soundGroup;
         boolean success = setComponentState(pos, placementState, Component.NOTIFY_ALL);
         if(success) {
-            playSound(MinecraftClient.getInstance().player, breaking ? soundGroup.getBreakSound() : soundGroup.getPlaceSound(), SoundCategory.BLOCKS, (soundGroup.getVolume() + 1.0f) / 2.0f, soundGroup.getPitch());
+            playSound(Minecraft.getInstance().player, breaking ? soundGroup.getBreakSound() : soundGroup.getPlaceSound(), SoundSource.BLOCKS, (soundGroup.getVolume() + 1.0f) / 2.0f, soundGroup.getPitch());
         }
     }
 
     @Override
-    public void playSoundInternal(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch) {
+    public void playSoundInternal(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch) {
         this.context.playSound(except, sound, category, volume, pitch);
     }
 
@@ -66,12 +63,12 @@ public class ClientCircuit extends Circuit {
     }
 
     @Override
-    public void useComponent(ComponentPos pos, PlayerEntity player) {
+    public void useComponent(ComponentPos pos, Player player) {
         ClientPlayNetworking.send(new ComponentInteractionC2SPacket(pos, this.context.getBlockPos()));
         super.useComponent(pos, player);
     }
 
-    public void rename(Text newName) {
+    public void rename(net.minecraft.network.chat.Component newName) {
         ClientPlayNetworking.send(new RenameCircuitC2SPacket(newName, this.context.getBlockPos()));
     }
 

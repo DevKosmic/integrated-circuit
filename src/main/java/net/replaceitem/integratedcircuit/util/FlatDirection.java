@@ -1,15 +1,15 @@
 package net.replaceitem.integratedcircuit.util;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.block.BlockState;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.level.block.state.BlockState;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
 
-public enum FlatDirection implements StringIdentifiable {
+public enum FlatDirection implements StringRepresentable {
     NORTH(0, "north", 0, -1, Axis.Y, Direction.NORTH),
     EAST(1, "east", 1, 0, Axis.X, Direction.EAST),
     SOUTH(2, "south", 0, 1, Axis.Y, Direction.SOUTH),
@@ -25,7 +25,7 @@ public enum FlatDirection implements StringIdentifiable {
     public static final FlatDirection[] VALUES_X = {EAST, WEST};
     public static final FlatDirection[] VALUES_Y = {NORTH, SOUTH};
 
-    public static final PacketCodec<ByteBuf,FlatDirection> PACKET_CODEC = PacketCodecs.indexed(value -> VALUES[value], FlatDirection::getIndex);
+    public static final StreamCodec<ByteBuf,FlatDirection> PACKET_CODEC = ByteBufCodecs.idMapper(value -> VALUES[value], FlatDirection::getIndex);
 
     FlatDirection(int index, String name, int dx, int dy, Axis axis, Direction vanillaDirection) {
         this.index = index;
@@ -68,8 +68,8 @@ public enum FlatDirection implements StringIdentifiable {
     }
 
     public Direction toVanillaDirection(BlockState circuit) {
-        if(circuit.contains(IntegratedCircuitBlock.FACING))
-            return this.toVanillaDirection(circuit.get(IntegratedCircuitBlock.FACING));
+        if(circuit.hasProperty(IntegratedCircuitBlock.FACING))
+            return this.toVanillaDirection(circuit.getValue(IntegratedCircuitBlock.FACING));
         return this.toVanillaDirection();
     }
 
@@ -88,8 +88,8 @@ public enum FlatDirection implements StringIdentifiable {
     }
 
     public static FlatDirection fromVanillaDirection(BlockState circuit, Direction direction) {
-        if(circuit.contains(IntegratedCircuitBlock.FACING))
-            return FlatDirection.fromVanillaDirection(circuit.get(IntegratedCircuitBlock.FACING), direction);
+        if(circuit.hasProperty(IntegratedCircuitBlock.FACING))
+            return FlatDirection.fromVanillaDirection(circuit.getValue(IntegratedCircuitBlock.FACING), direction);
         return FlatDirection.fromVanillaDirection(direction);
     }
 
@@ -98,7 +98,7 @@ public enum FlatDirection implements StringIdentifiable {
     }
 
     @Override
-    public String asString() {
+    public String getSerializedName() {
         return this.name;
     }
 

@@ -1,14 +1,14 @@
 package net.replaceitem.integratedcircuit.network.packet;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.CircuitSerializer;
 import net.replaceitem.integratedcircuit.circuit.ClientCircuit;
@@ -16,24 +16,24 @@ import net.replaceitem.integratedcircuit.circuit.context.ClientWorldClientCircui
 
 public record EditIntegratedCircuitS2CPacket(
         BlockPos pos,
-        Text customName,
-        NbtCompound circuitNbt
-) implements CustomPayload {
-    public static final CustomPayload.Id<EditIntegratedCircuitS2CPacket> ID = new CustomPayload.Id<>(IntegratedCircuit.id("edit_integrated_circuit_s2c_packet"));
+        Component customName,
+        CompoundTag circuitNbt
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<EditIntegratedCircuitS2CPacket> ID = new CustomPacketPayload.Type<>(IntegratedCircuit.id("edit_integrated_circuit_s2c_packet"));
 
-    public static final PacketCodec<RegistryByteBuf, EditIntegratedCircuitS2CPacket> PACKET_CODEC = PacketCodec.tuple(
-        BlockPos.PACKET_CODEC, EditIntegratedCircuitS2CPacket::pos,
-        TextCodecs.PACKET_CODEC, EditIntegratedCircuitS2CPacket::customName,
-        PacketCodecs.NBT_COMPOUND, EditIntegratedCircuitS2CPacket::circuitNbt, // TODO use packet codec for circuit
+    public static final StreamCodec<RegistryFriendlyByteBuf, EditIntegratedCircuitS2CPacket> PACKET_CODEC = StreamCodec.composite(
+        BlockPos.STREAM_CODEC, EditIntegratedCircuitS2CPacket::pos,
+        ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC, EditIntegratedCircuitS2CPacket::customName,
+        ByteBufCodecs.COMPOUND_TAG, EditIntegratedCircuitS2CPacket::circuitNbt, // TODO use packet codec for circuit
         EditIntegratedCircuitS2CPacket::new
     );
     
-    public ClientCircuit getClientCircuit(ClientWorld world, BlockPos pos) {
+    public ClientCircuit getClientCircuit(ClientLevel world, BlockPos pos) {
         return new CircuitSerializer(circuitNbt).readClientCircuit(new ClientWorldClientCircuitContext(world, pos));
     }
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

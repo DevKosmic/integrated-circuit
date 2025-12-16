@@ -1,2 +1,2 @@
 accessWidener   v1      named
-accessible method net/minecraft/world/chunk/PaletteProvider <init> (Lnet/minecraft/util/collection/IndexedIterable;I)V
+accessible method net/minecraft/world/level/chunk/Strategy <init> (Lnet/minecraft/core/IdMap;I)V

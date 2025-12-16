@@ -1,15 +1,15 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
 import com.google.common.collect.Lists;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.*;
 import net.replaceitem.integratedcircuit.client.gui.IntegratedCircuitScreen;
@@ -22,26 +22,26 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class TorchComponent extends FacingComponent {
-    private static final Identifier ITEM_TEXTURE = Identifier.ofVanilla("textures/block/redstone_torch.png");
+    private static final Identifier ITEM_TEXTURE = Identifier.withDefaultNamespace("textures/block/redstone_torch.png");
     private static final Identifier TOOL_TEXTURE = IntegratedCircuit.id("toolbox/icons/torch");
     private static final Identifier TEXTURE = IntegratedCircuit.id("textures/integrated_circuit/torch.png");
     private static final Identifier TEXTURE_OFF = IntegratedCircuit.id("textures/integrated_circuit/torch_off.png");
 
-    public static final BooleanProperty LIT = Properties.LIT;
+    public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     private static final Map<ServerCircuit, List<BurnoutEntry>> BURNOUT_MAP = new WeakHashMap<>();
 
     public TorchComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getDefaultState().with(LIT, true));
+        this.setDefaultState(this.getDefaultState().setValue(LIT, true));
     }
 
     @Override
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
-        ComponentState componentState = this.getDefaultState().with(FACING, rotation);
+        ComponentState componentState = this.getDefaultState().setValue(FACING, rotation);
         if (!componentState.canPlaceAt(circuit, pos)) {
             for (FlatDirection value : CircuitNeighborUpdater.UPDATE_ORDER) {
-                componentState = componentState.with(FACING, value);
+                componentState = componentState.setValue(FACING, value);
                 if (componentState.canPlaceAt(circuit, pos)) return componentState;
             }
             return null;
@@ -60,19 +60,19 @@ public class TorchComponent extends FacingComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return IntegratedCircuitScreen.getSignalStrengthText(state.get(LIT) ? 15 : 0);
+    public Component getHoverInfoText(ComponentState state) {
+        return IntegratedCircuitScreen.getSignalStrengthText(state.getValue(LIT) ? 15 : 0);
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        Identifier texture = state.get(LIT) ? TEXTURE : TEXTURE_OFF;
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.get(FACING).getIndex(), a);
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        Identifier texture = state.getValue(LIT) ? TEXTURE : TEXTURE_OFF;
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.getValue(FACING).getIndex(), a);
     }
 
     @Override
     public ComponentState getStateForNeighborUpdate(ComponentState state, FlatDirection direction, ComponentState neighborState, Circuit circuit, ComponentPos pos, ComponentPos neighborPos) {
-        if (direction.getOpposite() == state.get(FACING) && !canPlaceAt(state, circuit, pos)) {
+        if (direction.getOpposite() == state.getValue(FACING) && !canPlaceAt(state, circuit, pos)) {
             return Components.AIR.getDefaultState();
         }
         return state;
@@ -80,7 +80,7 @@ public class TorchComponent extends FacingComponent {
 
     @Override
     public boolean canPlaceAt(ComponentState state, Circuit circuit, ComponentPos pos) {
-        FlatDirection direction = state.get(FACING);
+        FlatDirection direction = state.getValue(FACING);
         ComponentPos blockPos = pos.offset(direction.getOpposite());
         ComponentState blockState = circuit.getComponentState(blockPos);
         return blockState.getComponent().isSideSolidFullSquare(circuit, blockPos, direction);
@@ -101,35 +101,35 @@ public class TorchComponent extends FacingComponent {
     }
 
     @Override
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
         boolean shouldUnpower = this.shouldUnpower(circuit, pos, state);
         List<BurnoutEntry> list = BURNOUT_MAP.get(circuit);
         while (list != null && !list.isEmpty() && circuit.getTime() - list.getFirst().time > 60L) {
             list.removeFirst();
         }
-        if (state.get(LIT)) {
+        if (state.getValue(LIT)) {
             if (shouldUnpower) {
-                circuit.setComponentState(pos, state.with(LIT, false), Component.NOTIFY_ALL);
+                circuit.setComponentState(pos, state.setValue(LIT, false), net.replaceitem.integratedcircuit.circuit.Component.NOTIFY_ALL);
                 if (isBurnedOut(circuit, pos, true)) {
-                    circuit.playSound(null, SoundEvents.BLOCK_REDSTONE_TORCH_BURNOUT, SoundCategory.BLOCKS, 1, 2.6f + (random.nextFloat() - random.nextFloat()) * 0.8f);
+                    circuit.playSound(null, SoundEvents.REDSTONE_TORCH_BURNOUT, SoundSource.BLOCKS, 1, 2.6f + (random.nextFloat() - random.nextFloat()) * 0.8f);
                     circuit.scheduleBlockTick(pos, circuit.getComponentState(pos).getComponent(), 160);
                 }
             }
         } else if (!shouldUnpower && !isBurnedOut(circuit, pos, false)) {
-            circuit.setComponentState(pos, state.with(LIT, true), Component.NOTIFY_ALL);
+            circuit.setComponentState(pos, state.setValue(LIT, true), net.replaceitem.integratedcircuit.circuit.Component.NOTIFY_ALL);
         }
     }
 
     @Override
-    public void neighborUpdate(ComponentState state, Circuit circuit, ComponentPos pos, Component sourceBlock, ComponentPos sourcePos, boolean notify) {
-        if (state.get(LIT) == this.shouldUnpower(circuit, pos, state) && !circuit.getCircuitTickScheduler().isTicking(pos, this)) {
+    public void neighborUpdate(ComponentState state, Circuit circuit, ComponentPos pos, net.replaceitem.integratedcircuit.circuit.Component sourceBlock, ComponentPos sourcePos, boolean notify) {
+        if (state.getValue(LIT) == this.shouldUnpower(circuit, pos, state) && !circuit.getCircuitTickScheduler().isTicking(pos, this)) {
             circuit.scheduleBlockTick(pos, this, 2);
         }
     }
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
-        return state.get(LIT) && state.get(FACING) != direction ? 15 : 0;
+        return state.getValue(LIT) && state.getValue(FACING) != direction ? 15 : 0;
     }
 
     @Override
@@ -138,7 +138,7 @@ public class TorchComponent extends FacingComponent {
     }
 
     protected boolean shouldUnpower(Circuit circuit, ComponentPos pos, ComponentState state) {
-        FlatDirection direction = state.get(FACING).getOpposite();
+        FlatDirection direction = state.getValue(FACING).getOpposite();
         return circuit.isEmittingRedstonePower(pos.offset(direction), direction);
     }
 
@@ -172,7 +172,7 @@ public class TorchComponent extends FacingComponent {
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<net.replaceitem.integratedcircuit.circuit.Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(LIT);
     }

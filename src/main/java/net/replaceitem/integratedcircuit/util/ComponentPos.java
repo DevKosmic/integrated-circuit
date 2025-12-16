@@ -4,8 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.util.math.Vec3i;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.codec.StreamCodec;
 
 public class ComponentPos extends Vec3i { // using vec3, but only 2d required
     
@@ -14,7 +14,7 @@ public class ComponentPos extends Vec3i { // using vec3, but only 2d required
             Codec.INT.fieldOf("y").forGetter(ComponentPos::getY)
     ).apply(instance, ComponentPos::new));
     
-    public static final PacketCodec<ByteBuf,ComponentPos> PACKET_CODEC = new PacketCodec<>() {
+    public static final StreamCodec<ByteBuf,ComponentPos> STREAM_CODEC = new StreamCodec<>() {
         public ComponentPos decode(ByteBuf byteBuf) {
             int x = byteBuf.readShort();
             int y = byteBuf.readShort();
@@ -35,7 +35,7 @@ public class ComponentPos extends Vec3i { // using vec3, but only 2d required
         return new ComponentPos(getX()+x, getY()+y);
     }
 
-    public ComponentPos add(Vec3i vec3i) {
+    public ComponentPos offset(Vec3i vec3i) {
         return this.add(vec3i.getX(), vec3i.getY());
     }
 
@@ -44,11 +44,11 @@ public class ComponentPos extends Vec3i { // using vec3, but only 2d required
     }
 
     public ComponentPos offset(FlatDirection direction, int amount) {
-        return this.add(direction.getOffset().multiply(amount));
+        return this.offset(direction.getOffset().multiply(amount));
     }
 
     public ComponentPos offset(FlatDirection direction) {
-        return this.add(direction.getOffset());
+        return this.offset(direction.getOffset());
     }
     
     public ComponentPos north() {

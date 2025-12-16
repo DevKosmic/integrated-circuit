@@ -1,14 +1,13 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -19,16 +18,16 @@ import net.replaceitem.integratedcircuit.util.FlatDirection;
 import org.jetbrains.annotations.Nullable;
 
 public class LeverComponent extends FacingComponent {
-    private static final Identifier ITEM_TEXTURE = Identifier.ofVanilla("textures/block/lever.png");
+    private static final Identifier ITEM_TEXTURE = Identifier.withDefaultNamespace("textures/block/lever.png");
     private static final Identifier TOOL_TEXTURE = IntegratedCircuit.id("toolbox/icons/lever");
     private static final Identifier TEXTURE_OFF = IntegratedCircuit.id("textures/integrated_circuit/lever_off.png");
     private static final Identifier TEXTURE_ON = IntegratedCircuit.id("textures/integrated_circuit/lever_on.png");
 
-    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     public LeverComponent(Settings settings) {
         super(settings);
-        this.setDefaultState(this.getStateManager().getDefaultState().with(FACING, FlatDirection.NORTH).with(POWERED, false));
+        this.setDefaultState(this.getStateManager().any().setValue(FACING, FlatDirection.NORTH).setValue(POWERED, false));
     }
 
     @Override
@@ -42,24 +41,24 @@ public class LeverComponent extends FacingComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return IntegratedCircuitScreen.getSignalStrengthText(state.get(POWERED) ? 15 : 0);
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return IntegratedCircuitScreen.getSignalStrengthText(state.getValue(POWERED) ? 15 : 0);
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
-        Identifier texture = state.get(POWERED) ? TEXTURE_ON : TEXTURE_OFF;
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.get(FACING).getIndex(), a);
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
+        Identifier texture = state.getValue(POWERED) ? TEXTURE_ON : TEXTURE_OFF;
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.getValue(FACING).getIndex(), a);
     }
 
     @Override
-    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, PlayerEntity player) {
+    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, Player player) {
         if(circuit.isClient) {
             return;
         }
         state = this.togglePower(state, circuit, pos);
-        float f = state.get(POWERED) ? 0.6f : 0.5f;
-        circuit.playSound(null, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 1, f);
+        float f = state.getValue(POWERED) ? 0.6f : 0.5f;
+        circuit.playSound(null, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 1, f);
     }
 
     public ComponentState togglePower(ComponentState state, Circuit circuit, ComponentPos pos) {
@@ -72,14 +71,14 @@ public class LeverComponent extends FacingComponent {
     @Override
     public void onStateReplaced(ComponentState state, Circuit circuit, ComponentPos pos, ComponentState newState) {
         if(state.isOf(newState.getComponent())) return;
-        if(state.get(POWERED)) {
+        if(state.getValue(POWERED)) {
             circuit.updateNeighborsAlways(pos, this);
         }
     }
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
-        return state.get(POWERED) ? 15 : 0;
+        return state.getValue(POWERED) ? 15 : 0;
     }
 
     @Override
@@ -93,7 +92,7 @@ public class LeverComponent extends FacingComponent {
     }
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(POWERED);
     }

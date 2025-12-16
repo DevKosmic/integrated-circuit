@@ -2,15 +2,14 @@ package net.replaceitem.integratedcircuit.datafix;
 
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import net.minecraft.datafixer.schema.IdentifierNormalizingSchema;
-
 import java.util.Map;
 import java.util.function.Supplier;
+import net.minecraft.util.datafix.schemas.NamespacedSchema;
 
 /**
  * Initial schema adding types of first IntegratedCircuit version (Data version 1.19.2)
  */
-public class Schema3120 extends IdentifierNormalizingSchema {
+public class Schema3120 extends NamespacedSchema {
     public Schema3120(int versionKey, Schema parent) {
         super(versionKey, parent);
     }

@@ -7,26 +7,25 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import net.minecraft.client.util.InputUtil;
-
+import com.mojang.blaze3d.platform.InputConstants;
 import java.lang.reflect.Type;
 
-public class KeySerializer implements JsonSerializer<InputUtil.Key>, JsonDeserializer<InputUtil.Key> {
+public class KeySerializer implements JsonSerializer<InputConstants.Key>, JsonDeserializer<InputConstants.Key> {
     @Override
-    public InputUtil.Key deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-        if(!jsonElement.isJsonObject()) return InputUtil.UNKNOWN_KEY;
+    public InputConstants.Key deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+        if(!jsonElement.isJsonObject()) return InputConstants.UNKNOWN;
         JsonElement codeElement = jsonElement.getAsJsonObject().get("code");
         JsonElement typeElement = jsonElement.getAsJsonObject().get("type");
-        if(codeElement == null || !codeElement.isJsonPrimitive()) return InputUtil.UNKNOWN_KEY;
-        InputUtil.Type inputType = typeElement != null && typeElement.isJsonPrimitive() ? InputUtil.Type.values()[typeElement.getAsInt()] : InputUtil.Type.KEYSYM;
-        return inputType.createFromCode(codeElement.getAsInt());
+        if(codeElement == null || !codeElement.isJsonPrimitive()) return InputConstants.UNKNOWN;
+        InputConstants.Type inputType = typeElement != null && typeElement.isJsonPrimitive() ? InputConstants.Type.values()[typeElement.getAsInt()] : InputConstants.Type.KEYSYM;
+        return inputType.getOrCreate(codeElement.getAsInt());
     }
 
     @Override
-    public JsonElement serialize(InputUtil.Key key, Type type, JsonSerializationContext jsonSerializationContext) {
+    public JsonElement serialize(InputConstants.Key key, Type type, JsonSerializationContext jsonSerializationContext) {
         JsonObject object = new JsonObject();
-        object.addProperty("code", key.getCode());
-        object.addProperty("type", key.getCategory().ordinal());
+        object.addProperty("code", key.getValue());
+        object.addProperty("type", key.getType().ordinal());
         return object;
     }
 }

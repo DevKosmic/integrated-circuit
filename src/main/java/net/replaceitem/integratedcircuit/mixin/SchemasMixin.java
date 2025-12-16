@@ -2,11 +2,11 @@ package net.replaceitem.integratedcircuit.mixin;
 
 import com.mojang.datafixers.DataFixerBuilder;
 import com.mojang.datafixers.schemas.Schema;
-import net.minecraft.datafixer.Schemas;
-import net.minecraft.datafixer.TypeReferences;
-import net.minecraft.datafixer.fix.ChoiceTypesFix;
-import net.minecraft.datafixer.fix.RenameBlockEntityFix;
-import net.minecraft.datafixer.schema.IdentifierNormalizingSchema;
+import net.minecraft.util.datafix.DataFixers;
+import net.minecraft.util.datafix.fixes.AddNewChoices;
+import net.minecraft.util.datafix.fixes.BlockEntityRenameFix;
+import net.minecraft.util.datafix.fixes.References;
+import net.minecraft.util.datafix.schemas.NamespacedSchema;
 import net.replaceitem.integratedcircuit.datafix.Schema3120;
 import net.replaceitem.integratedcircuit.datafix.Schema3800_1;
 import net.replaceitem.integratedcircuit.datafix.UnflattenCircuitNameFix;
@@ -18,29 +18,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.UnaryOperator;
 
-@Mixin(Schemas.class)
+@Mixin(DataFixers.class)
 public abstract class SchemasMixin {
     @Shadow
-    private static UnaryOperator<String> replacing(String old, String current) {
+    private static UnaryOperator<String> createRenamer(String old, String current) {
         return null;
     }
 
-    @Inject(method = "build", at = @At(value = "CONSTANT", args = "intValue=3201"))
+    @Inject(method = "addFixers", at = @At(value = "CONSTANT", args = "intValue=3201"))
     private static void beforeSchema3201(DataFixerBuilder builder, CallbackInfo ci) {
         Schema schema3120 = builder.addSchema(3120, Schema3120::new);
-        builder.addFixer(new ChoiceTypesFix(schema3120, "Added Integrated Circuit", TypeReferences.BLOCK_ENTITY));
+        builder.addFixer(new AddNewChoices(schema3120, "Added Integrated Circuit", References.BLOCK_ENTITY));
     }
 
-    @Inject(method = "build", at = @At(value = "CONSTANT", args = "intValue=3803"))
+    @Inject(method = "addFixers", at = @At(value = "CONSTANT", args = "intValue=3803"))
     private static void beforeSchema3803(DataFixerBuilder builder, CallbackInfo ci) {
         Schema schema3800_1 = builder.addSchema(3800, 1, Schema3800_1::new);
-        builder.addFixer(RenameBlockEntityFix.create(schema3800_1, "Rename integrated_circuit:integrated_circuit_block_entity to integrated_circuit:integrated_circuit", replacing("integrated_circuit:integrated_circuit_block_entity", "integrated_circuit:integrated_circuit")));
+        builder.addFixer(BlockEntityRenameFix.create(schema3800_1, "Rename integrated_circuit:integrated_circuit_block_entity to integrated_circuit:integrated_circuit", createRenamer("integrated_circuit:integrated_circuit_block_entity", "integrated_circuit:integrated_circuit")));
     }
 
     // 1.21.5 -> 1.21.6
-    @Inject(method = "build", at = @At(value = "CONSTANT", args = "intValue=4424"))
+    @Inject(method = "addFixers", at = @At(value = "CONSTANT", args = "intValue=4424"))
     private static void beforeSchema4424(DataFixerBuilder builder, CallbackInfo ci) {
-        Schema schema4421_1 = builder.addSchema(4421, 1, IdentifierNormalizingSchema::new);
+        Schema schema4421_1 = builder.addSchema(4421, 1, NamespacedSchema::new);
         builder.addFixer(new UnflattenCircuitNameFix(schema4421_1, "integrated_circuit:integrated_circuit"));
     }
 }

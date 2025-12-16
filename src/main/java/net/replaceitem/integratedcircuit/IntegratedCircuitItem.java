@@ -1,15 +1,16 @@
 package net.replaceitem.integratedcircuit;
 
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.DyeColor;
-
 import static net.replaceitem.integratedcircuit.IntegratedCircuit.Items;
 
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.replaceitem.integratedcircuit.IntegratedCircuit.Items;
+
 public class IntegratedCircuitItem extends BlockItem {
-    public IntegratedCircuitItem(IntegratedCircuitBlock block, Item.Settings settings) {
+    public IntegratedCircuitItem(IntegratedCircuitBlock block, Item.Properties settings) {
         super(block, settings);
     }
 
@@ -35,8 +36,8 @@ public class IntegratedCircuitItem extends BlockItem {
     }
 
     @Override
-    public Text getName(ItemStack stack) {
-        if(stack.getComponents().contains(IntegratedCircuit.CIRCUIT_DATA)) return super.getName(stack);
-        return Text.translatable(this.getTranslationKey() + ".empty");
+    public Component getName(ItemStack stack) {
+        if(stack.getComponents().has(IntegratedCircuit.CIRCUIT_DATA)) return super.getName(stack);
+        return Component.translatable(this.getDescriptionId() + ".empty");
     }
 }

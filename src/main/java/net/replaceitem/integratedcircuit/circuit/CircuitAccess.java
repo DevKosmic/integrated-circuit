@@ -1,11 +1,11 @@
 package net.replaceitem.integratedcircuit.circuit;
 
-import net.minecraft.world.tick.TickPriority;
+import net.minecraft.world.ticks.TickPriority;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
 
 /**
- * @see net.minecraft.world.WorldAccess
+ * @see net.minecraft.world.level.LevelAccessor
  */
 public interface CircuitAccess {
 

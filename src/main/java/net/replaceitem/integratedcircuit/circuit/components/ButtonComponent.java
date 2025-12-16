@@ -1,18 +1,17 @@
 package net.replaceitem.integratedcircuit.circuit.components;
 
-import net.minecraft.block.Block;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.Circuit;
 import net.replaceitem.integratedcircuit.circuit.Component;
@@ -29,14 +28,14 @@ public class ButtonComponent extends FacingComponent {
     private static final Identifier TOOL_TEXTURE_STONE = IntegratedCircuit.id("toolbox/icons/button_stone");
     private static final Identifier TOOL_TEXTURE_WOOD = IntegratedCircuit.id("toolbox/icons/button_wood");
 
-    public static final BooleanProperty POWERED = Properties.POWERED;
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
     private final boolean wooden;
 
     public ButtonComponent(Settings settings, boolean wooden) {
         super(settings);
         this.wooden = wooden;
-        this.setDefaultState(this.getStateManager().getDefaultState().with(POWERED, false));
+        this.setDefaultState(this.getStateManager().any().setValue(POWERED, false));
     }
 
     @Override
@@ -50,59 +49,59 @@ public class ButtonComponent extends FacingComponent {
     }
 
     @Override
-    public Text getHoverInfoText(ComponentState state) {
-        return IntegratedCircuitScreen.getSignalStrengthText(state.get(POWERED) ? 15 : 0);
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return IntegratedCircuitScreen.getSignalStrengthText(state.getValue(POWERED) ? 15 : 0);
     }
 
     @Override
-    public void render(DrawContext drawContext, int x, int y, float a, ComponentState state) {
+    public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
         Identifier texture = getItemTexture();
-        float b = state.get(POWERED) ? 0.5f : 1f;
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.get(FACING).getIndex(), ColorHelper.fromFloats(a, b, b, b));
+        float b = state.getValue(POWERED) ? 0.5f : 1f;
+        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.getValue(FACING).getIndex(), ARGB.colorFromFloat(a, b, b, b));
     }
 
     @Override
-    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, PlayerEntity player) {
-        if(state.get(POWERED)) return;
+    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, Player player) {
+        if(state.getValue(POWERED)) return;
         powerOn(state, circuit, pos);
         this.playClickSound(player, circuit, true);
     }
 
-    protected void playClickSound(@Nullable PlayerEntity player, Circuit circuit, boolean powered) {
-        circuit.playSound(powered ? player : null, this.getClickSound(powered), SoundCategory.BLOCKS, 1.0f, 1.0f);
+    protected void playClickSound(@Nullable Player player, Circuit circuit, boolean powered) {
+        circuit.playSound(powered ? player : null, this.getClickSound(powered), SoundSource.BLOCKS, 1.0f, 1.0f);
     }
 
     protected SoundEvent getClickSound(boolean powered) {
         return powered ?
-                (this.wooden ? SoundEvents.BLOCK_WOODEN_BUTTON_CLICK_ON : SoundEvents.BLOCK_STONE_BUTTON_CLICK_ON)
-                :(this.wooden ? SoundEvents.BLOCK_WOODEN_BUTTON_CLICK_OFF : SoundEvents.BLOCK_STONE_BUTTON_CLICK_OFF);
+                (this.wooden ? SoundEvents.WOODEN_BUTTON_CLICK_ON : SoundEvents.STONE_BUTTON_CLICK_ON)
+                :(this.wooden ? SoundEvents.WOODEN_BUTTON_CLICK_OFF : SoundEvents.STONE_BUTTON_CLICK_OFF);
     }
 
     @Override
     public void onStateReplaced(ComponentState state, Circuit circuit, ComponentPos pos, ComponentState newState) {
         if(state.isOf(newState.getComponent())) return;
-        if(state.get(POWERED)) {
+        if(state.getValue(POWERED)) {
             circuit.updateNeighborsAlways(pos, this);
         }
     }
 
     @Override
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
-        if(!state.get(POWERED)) return;
-        circuit.setComponentState(pos, state.with(POWERED, false), Block.NOTIFY_ALL);
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
+        if(!state.getValue(POWERED)) return;
+        circuit.setComponentState(pos, state.setValue(POWERED, false), Block.UPDATE_ALL);
         circuit.updateNeighborsAlways(pos, this);
         this.playClickSound(null, circuit, false);
     }
 
     public void powerOn(ComponentState state, Circuit circuit, ComponentPos pos) {
-        circuit.setComponentState(pos, state.with(POWERED, true), Block.NOTIFY_ALL);
+        circuit.setComponentState(pos, state.setValue(POWERED, true), Block.UPDATE_ALL);
         circuit.updateNeighborsAlways(pos, this);
         circuit.scheduleBlockTick(pos, this, wooden ? 30 : 20);
     }
 
     @Override
     public int getWeakRedstonePower(ComponentState state, Circuit circuit, ComponentPos pos, FlatDirection direction) {
-        return state.get(POWERED) ? 15 : 0;
+        return state.getValue(POWERED) ? 15 : 0;
     }
 
     @Override
@@ -117,7 +116,7 @@ public class ButtonComponent extends FacingComponent {
 
 
     @Override
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         super.appendProperties(builder);
         builder.add(POWERED);
     }

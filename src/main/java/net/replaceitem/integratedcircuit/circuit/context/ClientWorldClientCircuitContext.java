@@ -1,23 +1,23 @@
 package net.replaceitem.integratedcircuit.circuit.context;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 public class ClientWorldClientCircuitContext implements ClientCircuitContext {
-    private final ClientWorld world;
+    private final ClientLevel world;
     private final BlockPos blockPos;
 
-    public ClientWorldClientCircuitContext(ClientWorld world, BlockPos blockPos) {
+    public ClientWorldClientCircuitContext(ClientLevel world, BlockPos blockPos) {
         this.world = world;
         this.blockPos = blockPos;
     }
 
     @Override
-    public void playSound(@Nullable PlayerEntity except, SoundEvent sound, SoundCategory category, float volume, float pitch) {
+    public void playSound(@Nullable Player except, SoundEvent sound, SoundSource category, float volume, float pitch) {
         this.world.playSound(except, this.blockPos, sound, category, volume, pitch);
     }
 
@@ -28,6 +28,6 @@ public class ClientWorldClientCircuitContext implements ClientCircuitContext {
 
     @Override
     public long getTime() {
-        return world.getTime();
+        return world.getGameTime();
     }
 }

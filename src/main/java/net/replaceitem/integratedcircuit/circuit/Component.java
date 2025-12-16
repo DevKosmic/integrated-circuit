@@ -3,19 +3,17 @@ package net.replaceitem.integratedcircuit.circuit;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.sound.BlockSoundGroup;
-import net.minecraft.state.StateManager;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.IdList;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.Holder;
+import net.minecraft.core.IdMapper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.state.StateDefinition;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.components.FacingComponent;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
@@ -25,11 +23,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public abstract class Component {
-    public static final PacketCodec<RegistryByteBuf, Component> PACKET_CODEC = PacketCodecs.registryValue(IntegratedCircuit.COMPONENTS_REGISTRY_KEY);
+    public static final StreamCodec<RegistryFriendlyByteBuf, Component> PACKET_CODEC = ByteBufCodecs.registry(IntegratedCircuit.COMPONENTS_REGISTRY_KEY);
 
     //public static final MapCodec<Component> CODEC = createCodec(settings1 -> new Component(settings1));
-    private final RegistryEntry.Reference<Component> registryEntry = IntegratedCircuit.COMPONENTS_REGISTRY.createEntry(this);
-    public static final IdList<ComponentState> STATE_IDS = new IdList<>();
+    private final Holder.Reference<Component> registryEntry = IntegratedCircuit.COMPONENTS_REGISTRY.createIntrusiveHolder(this);
+    public static final IdMapper<ComponentState> STATE_IDS = new IdMapper<>();
     
     // copy from Block, only few are needed, but all kept for future
     public static final int NOTIFY_NEIGHBORS = 1;
@@ -45,27 +43,27 @@ public abstract class Component {
     
     private final Settings settings;
     private ComponentState defaultState;
-    private final StateManager<Component, ComponentState> stateManager;
+    private final StateDefinition<Component, ComponentState> stateManager;
     
     public static final FlatDirection[] DIRECTIONS = new FlatDirection[]{FlatDirection.WEST, FlatDirection.EAST, FlatDirection.NORTH, FlatDirection.SOUTH};
 
     public Component(Settings settings) {
         this.settings = settings;
-        StateManager.Builder<Component, ComponentState> builder = new StateManager.Builder<>(this);
+        StateDefinition.Builder<Component, ComponentState> builder = new StateDefinition.Builder<>(this);
         this.appendProperties(builder);
-        this.stateManager = builder.build(Component::getDefaultState, ComponentState::new);
-        this.setDefaultState(this.stateManager.getDefaultState());
+        this.stateManager = builder.create(Component::getDefaultState, ComponentState::new);
+        this.setDefaultState(this.stateManager.any());
     }
 
     public Settings getSettings() {
         return settings;
     }
 
-    public Text getName() {
-        return Text.translatable(IntegratedCircuit.COMPONENTS_REGISTRY.getId(this).toTranslationKey("integrated_circuit.component"));
+    public net.minecraft.network.chat.Component getName() {
+        return net.minecraft.network.chat.Component.translatable(IntegratedCircuit.COMPONENTS_REGISTRY.getKey(this).toLanguageKey("integrated_circuit.component"));
     }
 
-    public void appendProperties(StateManager.Builder<Component, ComponentState> builder) {
+    public void appendProperties(StateDefinition.Builder<Component, ComponentState> builder) {
         
     }
 
@@ -79,14 +77,14 @@ public abstract class Component {
     
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
         ComponentState defaultState = this.getDefaultState();
-        if(this.stateManager.getProperties().contains(FacingComponent.FACING)) return defaultState.with(FacingComponent.FACING, rotation);
+        if(this.stateManager.getProperties().contains(FacingComponent.FACING)) return defaultState.setValue(FacingComponent.FACING, rotation);
         return defaultState;
     }
 
     public abstract @Nullable Identifier getItemTexture();
     public abstract @Nullable Identifier getToolTexture();
 
-    public abstract void render(DrawContext drawContext, int x, int y, float a, ComponentState state);
+    public abstract void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state);
 
     public static void replace(ComponentState state, ComponentState newState, Circuit world, ComponentPos pos, int flags) {
         replace(state, newState, world, pos, flags, 512);
@@ -116,7 +114,7 @@ public abstract class Component {
         
     }
     
-    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, PlayerEntity player) {
+    public void onUse(ComponentState state, Circuit circuit, ComponentPos pos, Player player) {
         
     }
     
@@ -124,7 +122,7 @@ public abstract class Component {
         
     }
 
-    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, Random random) {
+    public void scheduledTick(ComponentState state, ServerCircuit circuit, ComponentPos pos, RandomSource random) {
         
     }
 
@@ -157,7 +155,7 @@ public abstract class Component {
     }
 
     /**
-     * Works slightly different from {@link net.minecraft.block.RedstoneWireBlock#increasePower(BlockState)},
+     * Works slightly different from {@link net.minecraft.world.level.block.RedStoneWireBlock#increasePower(BlockState)},
      * in that it gets called from the component where the power is checked at, not where it's checked from.
      * This is done so different behaviours can be used for wire/port/crossover, without several checks.
      */
@@ -173,15 +171,15 @@ public abstract class Component {
 
     @Override
     public String toString() {
-        return IntegratedCircuit.COMPONENTS_REGISTRY.getId(this).toString();
+        return IntegratedCircuit.COMPONENTS_REGISTRY.getKey(this).toString();
     }
 
 
-    protected static <C extends Component> RecordCodecBuilder<C, Component.Settings> createSettingsCodec() {
-        return Component.Settings.CODEC.fieldOf("properties").forGetter(Component::getSettings);
+    protected static <C extends Component> RecordCodecBuilder<C, Settings> createSettingsCodec() {
+        return Settings.CODEC.fieldOf("properties").forGetter(Component::getSettings);
     }
 
-    public static <C extends Component> MapCodec<C> createCodec(Function<Component.Settings, C> componentFromSetting) {
+    public static <C extends Component> MapCodec<C> createCodec(Function<Settings, C> componentFromSetting) {
         return RecordCodecBuilder.mapCodec(instance -> instance.group(createSettingsCodec()).apply(instance, componentFromSetting));
     }
 
@@ -189,28 +187,28 @@ public abstract class Component {
         return false;
     }
 
-    public Text getHoverInfoText(ComponentState state) {
-        return Text.empty();
+    public net.minecraft.network.chat.Component getHoverInfoText(ComponentState state) {
+        return net.minecraft.network.chat.Component.empty();
     }
 
-    public StateManager<Component, ComponentState> getStateManager() {
+    public StateDefinition<Component, ComponentState> getStateManager() {
         return stateManager;
     }
 
 
     public static class Settings {
 
-        public static final Codec<Settings> CODEC = Codec.unit(Settings::new);
+        public static final Codec<Settings> CODEC = MapCodec.unitCodec(Settings::new);
         
         public Settings() {
             
         }
 
-        public Settings sounds(BlockSoundGroup soundGroup) {
+        public Settings sounds(SoundType soundGroup) {
             this.soundGroup = soundGroup;
             return this;
         }
 
-        public BlockSoundGroup soundGroup = BlockSoundGroup.STONE;
+        public SoundType soundGroup = SoundType.STONE;
     }
 }

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 /**
- * Replicates {@link net.minecraft.world.block.SimpleNeighborUpdater} but for circuits
+ * Replicates {@link net.minecraft.world.level.redstone.InstantNeighborUpdater} but for circuits
  */
 
 public class CircuitNeighborUpdater {

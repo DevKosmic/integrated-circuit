@@ -1,27 +1,27 @@
 package net.replaceitem.integratedcircuit.network.packet;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 
 public record CircuitNameUpdateS2CPacket(
-    Text newName,
+    Component newName,
     BlockPos pos
-) implements CustomPayload {
-    public static final CustomPayload.Id<CircuitNameUpdateS2CPacket> ID = new CustomPayload.Id<>(IntegratedCircuit.id("circuit_name_update_s2c_packet"));
+) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Type<CircuitNameUpdateS2CPacket> ID = new CustomPacketPayload.Type<>(IntegratedCircuit.id("circuit_name_update_s2c_packet"));
 
-    public static final PacketCodec<RegistryByteBuf, CircuitNameUpdateS2CPacket> PACKET_CODEC = PacketCodec.tuple(
-        TextCodecs.PACKET_CODEC, CircuitNameUpdateS2CPacket::newName,
-        BlockPos.PACKET_CODEC, CircuitNameUpdateS2CPacket::pos,
+    public static final StreamCodec<RegistryFriendlyByteBuf, CircuitNameUpdateS2CPacket> PACKET_CODEC = StreamCodec.composite(
+        ComponentSerialization.TRUSTED_CONTEXT_FREE_STREAM_CODEC, CircuitNameUpdateS2CPacket::newName,
+        BlockPos.STREAM_CODEC, CircuitNameUpdateS2CPacket::pos,
         CircuitNameUpdateS2CPacket::new
     );
 
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

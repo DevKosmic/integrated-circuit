@@ -3,27 +3,27 @@ package net.replaceitem.integratedcircuit.datagen;
 import com.google.common.collect.ImmutableMap;
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
-import net.minecraft.data.recipe.RecipeExporter;
-import net.minecraft.data.recipe.RecipeGenerator;
-import net.minecraft.data.recipe.TransmuteRecipeJsonBuilder;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.recipe.book.RecipeCategory;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.DyeColor;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.TransmuteRecipeBuilder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.IntegratedCircuitItem;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class IntegratedCircuitRecipeGenerator extends RecipeGenerator {
+public class IntegratedCircuitRecipeGenerator extends RecipeProvider {
 
-    protected IntegratedCircuitRecipeGenerator(RegistryWrapper.WrapperLookup registries, RecipeExporter exporter) {
+    protected IntegratedCircuitRecipeGenerator(HolderLookup.Provider registries, RecipeOutput exporter) {
         super(registries, exporter);
     }
     
@@ -53,46 +53,46 @@ public class IntegratedCircuitRecipeGenerator extends RecipeGenerator {
         for (Map.Entry<Item, Item> circuitBaseEntry : BASE_ITEMS.entrySet()) {
             Item item = circuitBaseEntry.getKey();
             Item baseItem = circuitBaseEntry.getValue();
-            createShaped(RecipeCategory.REDSTONE, item)
+            shaped(RecipeCategory.REDSTONE, item)
                     .group(GROUP)
                     .pattern(" T ")
                     .pattern("RQR")
                     .pattern("CCC")
-                    .input('T', Items.BLACK_TERRACOTTA)
-                    .input('R', Items.REDSTONE)
-                    .input('Q', Items.QUARTZ)
-                    .input('C', baseItem)
-                    .criterion(hasItem(Items.QUARTZ), conditionsFromItem(Items.QUARTZ))
-                    .offerTo(exporter);
+                    .define('T', Items.BLACK_TERRACOTTA)
+                    .define('R', Items.REDSTONE)
+                    .define('Q', Items.QUARTZ)
+                    .define('C', baseItem)
+                    .unlockedBy(getHasName(Items.QUARTZ), has(Items.QUARTZ))
+                    .save(output);
         }
         
     }
     
     private void offerDyeingRecipes() {
-        Ingredient ingredient = ingredientFromTag(IntegratedCircuit.Tags.DYEABLE_INTEGRATED_CIRCUITS_ITEM_TAG);
+        Ingredient ingredient = tag(IntegratedCircuit.Tags.DYEABLE_INTEGRATED_CIRCUITS_ITEM_TAG);
         for (DyeColor dyeColor : DyeColor.values()) {
             DyeItem dyeItem = DyeItem.byColor(dyeColor);
             Item circuitItem = IntegratedCircuitItem.fromColor(dyeColor);
-            TransmuteRecipeJsonBuilder.create(RecipeCategory.REDSTONE, ingredient, Ingredient.ofItem(dyeItem), circuitItem)
+            TransmuteRecipeBuilder.transmute(RecipeCategory.REDSTONE, ingredient, Ingredient.of(dyeItem), circuitItem)
                     .group("integrated_circuit_dye")
-                    .criterion(hasItem(dyeItem), this.conditionsFromItem(dyeItem))
-                    .offerTo(this.exporter, RegistryKey.of(RegistryKeys.RECIPE, IntegratedCircuit.id("dye_" + getItemPath(circuitItem))));
+                    .unlockedBy(getHasName(dyeItem), this.has(dyeItem))
+                    .save(this.output, ResourceKey.create(Registries.RECIPE, IntegratedCircuit.id("dye_" + getItemName(circuitItem))));
         }
     }
 
     @Override
-    public void generate() {
+    public void buildRecipes() {
         offerCircuitRecipes();
         offerDyeingRecipes();
     }
 
     static class Provider extends FabricRecipeProvider {
-        public Provider(FabricDataOutput output, CompletableFuture<RegistryWrapper.WrapperLookup> registriesFuture) {
+        public Provider(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
             super(output, registriesFuture);
         }
 
         @Override
-        protected RecipeGenerator getRecipeGenerator(RegistryWrapper.WrapperLookup wrapperLookup, RecipeExporter recipeExporter) {
+        protected RecipeProvider createRecipeProvider(HolderLookup.Provider wrapperLookup, RecipeOutput recipeExporter) {
             return new IntegratedCircuitRecipeGenerator(wrapperLookup, recipeExporter);
         }
 
