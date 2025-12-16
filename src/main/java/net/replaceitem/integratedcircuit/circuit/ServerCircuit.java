@@ -11,7 +11,6 @@ import net.replaceitem.integratedcircuit.circuit.context.ServerCircuitContext;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.ContextCodec;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ServerCircuit extends Circuit {
@@ -31,7 +30,7 @@ public class ServerCircuit extends Circuit {
         this.circuitTickScheduler = new CircuitTickScheduler();
     }
 
-    public ServerCircuit(@NotNull ServerCircuitContext context, @NotNull ComponentState[] portStates, @NotNull CircuitSection section, @NotNull CircuitTickScheduler tickScheduler) {
+    public ServerCircuit(ServerCircuitContext context, ComponentState[] portStates, CircuitSection section, CircuitTickScheduler tickScheduler) {
         super(false, portStates, section);
         this.context = context;
         this.circuitTickScheduler = tickScheduler;
@@ -83,12 +82,12 @@ public class ServerCircuit extends Circuit {
     @Override
     public void placeComponentState(ComponentPos pos, Component component, FlatDirection placementRotation) {
         ComponentState placementState = component.getPlacementState(this, pos, placementRotation);
-        if(placementState == null) placementState = Components.AIR_DEFAULT_STATE;
-        
-        ComponentState beforeState = this.getComponentState(pos);
-        if(beforeState.isAir() && placementState.isAir()) return;
-        this.setComponentState(pos, placementState, Component.NOTIFY_ALL);
-        placementState.getComponent().onPlaced(this, pos, placementState);
+        if(placementState != null) {
+            ComponentState beforeState = this.getComponentState(pos);
+            if (beforeState.isAir() && placementState.isAir()) return;
+            this.setComponentState(pos, placementState, Component.NOTIFY_ALL);
+            placementState.getComponent().onPlaced(this, pos, placementState);
+        }
     }
 
     @Override

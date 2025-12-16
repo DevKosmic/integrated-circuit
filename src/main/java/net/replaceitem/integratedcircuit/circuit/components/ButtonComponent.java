@@ -56,8 +56,10 @@ public class ButtonComponent extends FacingComponent {
     @Override
     public void render(GuiGraphics drawContext, int x, int y, float a, ComponentState state) {
         Identifier texture = getItemTexture();
-        float b = state.getValue(POWERED) ? 0.5f : 1f;
-        IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.getValue(FACING).getIndex(), ARGB.colorFromFloat(a, b, b, b));
+        if(texture != null) {
+            float b = state.getValue(POWERED) ? 0.5f : 1f;
+            IntegratedCircuitScreen.renderComponentTexture(drawContext, texture, x, y, state.getValue(FACING).getIndex(), ARGB.colorFromFloat(a, b, b, b));
+        }
     }
 
     @Override

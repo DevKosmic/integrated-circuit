@@ -75,7 +75,7 @@ public enum FlatDirection implements StringRepresentable {
 
     public static FlatDirection fromVanillaDirection(Direction direction) {
         return switch (direction) {
-            case DOWN, UP -> null;
+            case DOWN, UP -> throw new IllegalArgumentException("Cannot convert vertical Direction to FlatDirection");
             case NORTH -> NORTH;
             case SOUTH -> SOUTH;
             case WEST -> WEST;

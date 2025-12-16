@@ -159,8 +159,9 @@ public class IntegratedCircuitBlockEntity extends BlockEntity implements Nameabl
 
     @Override
     public Component getName() {
-        if(hasCustomName()) return this.customName;
-        return Component.translatable("block.integrated_circuit.integrated_circuit");
+        Component name = this.customName;
+        if (name == null) return Component.translatable("block.integrated_circuit.integrated_circuit");
+        return name;
     }
 
     public Set<ServerPlayer> getEditingPlayers() {
@@ -206,7 +207,7 @@ public class IntegratedCircuitBlockEntity extends BlockEntity implements Nameabl
     public CompoundTag getUpdateTag(HolderLookup.Provider registryLookup) {
         CompoundTag nbt = new CompoundTag();
         nbt.putByteArray("outputStrengths", this.renderSignalStrengths.clone());
-        if(this.hasCustomName()) {
+        if(this.customName != null) {
             nbt.store("CustomName", ComponentSerialization.CODEC, this.customName);
         }
         return nbt;

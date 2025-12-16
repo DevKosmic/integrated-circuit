@@ -45,11 +45,13 @@ public class ClientCircuit extends Circuit {
     public void placeComponentState(ComponentPos pos, Component component, FlatDirection placementRotation) {
         ClientPlayNetworking.send(new PlaceComponentC2SPacket(pos, this.context.getBlockPos(), component, placementRotation));
         ComponentState placementState = component.getPlacementState(this, pos, placementRotation);
-        boolean breaking = component == Components.AIR;
-        SoundType soundGroup = (breaking ? getComponentState(pos).getComponent() : component).getSettings().soundGroup;
-        boolean success = setComponentState(pos, placementState, Component.NOTIFY_ALL);
-        if(success) {
-            playSound(Minecraft.getInstance().player, breaking ? soundGroup.getBreakSound() : soundGroup.getPlaceSound(), SoundSource.BLOCKS, (soundGroup.getVolume() + 1.0f) / 2.0f, soundGroup.getPitch());
+        if(placementState != null) {
+            boolean breaking = component == Components.AIR;
+            SoundType soundGroup = (breaking ? getComponentState(pos).getComponent() : component).getSettings().soundGroup;
+            boolean success = setComponentState(pos, placementState, Component.NOTIFY_ALL);
+            if (success) {
+                playSound(Minecraft.getInstance().player, breaking ? soundGroup.getBreakSound() : soundGroup.getPlaceSound(), SoundSource.BLOCKS, (soundGroup.getVolume() + 1.0f) / 2.0f, soundGroup.getPitch());
+            }
         }
     }
 

@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlock;
 import net.replaceitem.integratedcircuit.IntegratedCircuitBlockEntity;
 import net.replaceitem.integratedcircuit.client.config.DefaultConfig;
+import org.jspecify.annotations.Nullable;
 
 public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer<IntegratedCircuitBlockEntity, IntegratedCircuitBlockEntityRenderState> {
     private final Font textRenderer;
@@ -30,14 +31,14 @@ public class IntegratedCircuitBlockEntityRenderer implements BlockEntityRenderer
     }
 
     @Override
-    public void extractRenderState(IntegratedCircuitBlockEntity blockEntity, IntegratedCircuitBlockEntityRenderState state, float tickProgress, Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumblingOverlay) {
+    public void extractRenderState(IntegratedCircuitBlockEntity blockEntity, IntegratedCircuitBlockEntityRenderState state, float tickProgress, Vec3 cameraPos, ModelFeatureRenderer.@Nullable CrumblingOverlay crumblingOverlay) {
         BlockEntityRenderer.super.extractRenderState(blockEntity, state, tickProgress, cameraPos, crumblingOverlay);
         state.customName = blockEntity.getCustomName();
     }
 
     @Override
     public void submit(IntegratedCircuitBlockEntityRenderState state, PoseStack matrices, SubmitNodeCollector queue, CameraRenderState cameraState) {
-        if(!DefaultConfig.config.getRenderCircuitName()) return;
+        if(!DefaultConfig.getConfig().getRenderCircuitName()) return;
         Direction facing = state.blockState.getValue(IntegratedCircuitBlock.FACING);
         Component customName = state.customName;
         if (customName == null) return;

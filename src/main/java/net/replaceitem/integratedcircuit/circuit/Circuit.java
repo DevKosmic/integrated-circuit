@@ -118,7 +118,6 @@ public abstract class Circuit implements CircuitAccess {
      */
     public boolean setComponentState(ComponentPos pos, ComponentState state, int flags, int maxUpdateDepth) {
         if(!isValidPos(pos)) return false;
-        if(state == null) state = Components.AIR_DEFAULT_STATE;
 
         // WorldChunk.setBlockState enters here in World.setBlockState
         ComponentState oldState = assignComponentState(pos, state);

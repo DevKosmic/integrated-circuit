@@ -37,6 +37,7 @@ public class TorchComponent extends FacingComponent {
     }
 
     @Override
+    @Nullable
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
         ComponentState componentState = this.getDefaultState().setValue(FACING, rotation);
         if (!componentState.canPlaceAt(circuit, pos)) {

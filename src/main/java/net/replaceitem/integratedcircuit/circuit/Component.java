@@ -18,7 +18,7 @@ import net.replaceitem.integratedcircuit.IntegratedCircuit;
 import net.replaceitem.integratedcircuit.circuit.components.FacingComponent;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.Function;
 
@@ -74,7 +74,8 @@ public abstract class Component {
     public final ComponentState getDefaultState() {
         return this.defaultState;
     }
-    
+
+    @Nullable
     public ComponentState getPlacementState(Circuit circuit, ComponentPos pos, FlatDirection rotation) {
         ComponentState defaultState = this.getDefaultState();
         if(this.stateManager.getProperties().contains(FacingComponent.FACING)) return defaultState.setValue(FacingComponent.FACING, rotation);

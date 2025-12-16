@@ -1,7 +1,5 @@
 package net.replaceitem.integratedcircuit;
 
-import static net.replaceitem.integratedcircuit.IntegratedCircuit.Items;
-
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.DyeColor;

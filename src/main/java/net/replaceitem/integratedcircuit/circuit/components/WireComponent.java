@@ -200,7 +200,7 @@ public class WireComponent extends AbstractWireComponent {
         if (state.isOf(Components.OBSERVER)) {
             return direction == state.getValue(FacingComponent.FACING);
         }
-        return state.emitsRedstonePower() && direction != null;
+        return state.emitsRedstonePower();
     }
 
     @Override

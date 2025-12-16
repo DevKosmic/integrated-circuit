@@ -26,7 +26,7 @@ import net.replaceitem.integratedcircuit.client.gui.widget.Toolbox;
 import net.replaceitem.integratedcircuit.network.packet.FinishEditingC2SPacket;
 import net.replaceitem.integratedcircuit.util.ComponentPos;
 import net.replaceitem.integratedcircuit.util.FlatDirection;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 public class IntegratedCircuitScreen extends Screen {
@@ -65,7 +65,9 @@ public class IntegratedCircuitScreen extends Screen {
     protected int x, y;
     protected int titleX, titleY;
 
+    @Nullable
     protected Toolbox toolbox;
+    @Nullable
     protected EditBox customNameTextField;
 
     protected Component customName;
@@ -316,28 +318,27 @@ public class IntegratedCircuitScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-        if (this.minecraft == null)
-            return false;
+        if(this.minecraft.player == null) return true;
 
         ComponentPos clickedPos = getComponentPosAt((int) click.x(), (int) click.y());
 
-        if (customNameTextField.isFocused() && !customNameTextField.isMouseOver(click.x(), click.y())) {
+        if (customNameTextField != null && customNameTextField.isFocused() && !customNameTextField.isMouseOver(click.x(), click.y())) {
             customNameTextField.setFocused(false);
         }
 
-        if (matchesMouse(DefaultConfig.config.getRotateKeybind(), click.button())) {
+        if (matchesMouse(DefaultConfig.getConfig().getRotateKeybind(), click.button())) {
             rotateComponent(1);
             return true;
         }
 
         boolean isInCircuit = circuit.isInside(clickedPos);
-        boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), click.button());
+        boolean isPlace = matchesMouse(DefaultConfig.getConfig().getPlaceKeybind(), click.button());
 
         startedDraggingInside = false;
 
         if (isInCircuit) {
-            boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), click.button());
-            boolean isPick = !isDestroy && matchesMouse(DefaultConfig.config.getPickKeybind(), click.button());
+            boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.getConfig().getDestroyKeybind(), click.button());
+            boolean isPick = !isDestroy && matchesMouse(DefaultConfig.getConfig().getPickKeybind(), click.button());
 
             if (isPlace) {
                 ComponentState state = circuit.getComponentState(clickedPos);
@@ -390,18 +391,24 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     private void selectPalette(net.replaceitem.integratedcircuit.circuit.Component component) {
-        selectPalette(toolbox.getComponentIndex(component));
+        if(toolbox != null) {
+            selectPalette(toolbox.getComponentIndex(component));
+        }
     }
 
     private void selectPalette(int index) {
-        toolbox.selectTool(index);
+        if(toolbox != null) {
+            toolbox.selectTool(index);
+        }
     }
 
     private void deselectPalette() {
-        toolbox.deselectTool();
+        if(toolbox != null) {
+            toolbox.deselectTool();
+        }
     }
 
-    private void updateCursorState(@Nullable net.replaceitem.integratedcircuit.circuit.Component component) {
+    private void updateCursorState(net.replaceitem.integratedcircuit.circuit.@Nullable Component component) {
         if (component != null) {
             this.cursorState = component.getDefaultState();
 
@@ -417,18 +424,18 @@ public class IntegratedCircuitScreen extends Screen {
     }
 
     public void updateCustomNameForExternalChange(Component customName) {
-        if (!this.customNameTextField.isFocused()) {
+        if (this.customNameTextField != null && !this.customNameTextField.isFocused()) {
             this.customNameTextField.setValue(customName.getString());
         }
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double offsetX, double offsetY) {
-        if (startedDraggingInside && this.minecraft != null) {
+        if (startedDraggingInside) {
             ComponentPos mousePos = getComponentPosAt((int) click.x(), (int) click.y());
             if (circuit.isInside(mousePos)) {
-                boolean isPlace = matchesMouse(DefaultConfig.config.getPlaceKeybind(), click.button());
-                boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.config.getDestroyKeybind(), click.button());
+                boolean isPlace = matchesMouse(DefaultConfig.getConfig().getPlaceKeybind(), click.button());
+                boolean isDestroy = !isPlace && matchesMouse(DefaultConfig.getConfig().getDestroyKeybind(), click.button());
                 if (isPlace) {
                     placeComponent(mousePos);
                 } else if (isDestroy) {
@@ -450,27 +457,30 @@ public class IntegratedCircuitScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-        if (DefaultConfig.config.getInvertScrollDirection())
+        if (DefaultConfig.getConfig().getInvertScrollDirection())
             verticalAmount = -verticalAmount;
         int intAmount = (int) verticalAmount;
-        switch (DefaultConfig.config.getScrollBehaviour()) {
+        switch (DefaultConfig.getConfig().getScrollBehaviour()) {
             case ROTATE -> rotateComponent(-intAmount);
-            case SELECT_COMPONENT ->
-                selectPalette(toolbox.getSelectedToolSlot() - intAmount);
+            case SELECT_COMPONENT -> {
+                if(toolbox != null) {
+                    selectPalette(toolbox.getSelectedToolSlot() - intAmount);
+                }
+            }
         }
         return true;
     }
 
     @Override
     public boolean keyPressed(KeyEvent input) {
-        if (this.customNameTextField.isFocused()) {
+        if (this.customNameTextField != null && this.customNameTextField.isFocused()) {
             if (input.isConfirmation() || input.isEscape()) {
                 customNameTextField.setFocused(false);
                 return true;
             }
         }
 
-        if (matchesKey(DefaultConfig.config.getRotateKeybind(), input.input(), input.scancode())) {
+        if (matchesKey(DefaultConfig.getConfig().getRotateKeybind(), input.input(), input.scancode())) {
             rotateComponent(1);
             return true;
         }

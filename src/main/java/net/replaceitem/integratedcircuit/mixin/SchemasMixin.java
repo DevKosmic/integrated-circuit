@@ -20,6 +20,7 @@ import java.util.function.UnaryOperator;
 
 @Mixin(DataFixers.class)
 public abstract class SchemasMixin {
+    @SuppressWarnings("DataFlowIssue")
     @Shadow
     private static UnaryOperator<String> createRenamer(String old, String current) {
         return null;

@@ -4,6 +4,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.replaceitem.integratedcircuit.circuit.Component;
 import net.replaceitem.integratedcircuit.circuit.Components;
 import net.replaceitem.integratedcircuit.client.gui.IntegratedCircuitScreen;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +84,7 @@ public class Toolbox {
         toolSelectionSubscribers.remove(subscriber);
     }
 
+    @Nullable
     public ToolSelectionInfo selectTool(int index) {
         if (index < 0 || index >= componentButtons.size())
             return null;
@@ -98,7 +100,6 @@ public class Toolbox {
 
         ToolSelectionInfo selectionInfo = new ToolSelectionInfo(index, component);
         notifyToolSelectionSubscribers(selectionInfo);
-
         return selectionInfo;
     }
 
@@ -123,6 +124,7 @@ public class Toolbox {
         }
     }
 
+    @Nullable
     public Component getComponent(int index) {
         if (index < 0 || index >= componentButtons.size())
             return null;

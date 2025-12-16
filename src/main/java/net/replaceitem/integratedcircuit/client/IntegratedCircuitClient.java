@@ -31,10 +31,10 @@ public class IntegratedCircuitClient implements ClientModInitializer {
                 block.getPortRenderStrength(view, pos, circuitDirection)
             );
         }, IntegratedCircuit.Blocks.CIRCUITS);
-        
-        BlockEntityRenderers.register(IntegratedCircuit.INTEGRATED_CIRCUIT_BLOCK_ENTITY, IntegratedCircuitBlockEntityRenderer::new);
 
         DefaultConfig.initialize();
+        
+        BlockEntityRenderers.register(IntegratedCircuit.INTEGRATED_CIRCUIT_BLOCK_ENTITY, IntegratedCircuitBlockEntityRenderer::new);
 
         ClientPlayNetworking.registerGlobalReceiver(CircuitNameUpdateS2CPacket.ID, ClientPacketHandler::receiveCircuitNameUpdatePacket);
         ClientPlayNetworking.registerGlobalReceiver(EditIntegratedCircuitS2CPacket.ID, ClientPacketHandler::receiveEditIntegratedCircuitPacket);

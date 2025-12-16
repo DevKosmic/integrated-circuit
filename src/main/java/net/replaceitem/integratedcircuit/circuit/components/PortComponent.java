@@ -71,6 +71,7 @@ public class PortComponent extends AbstractWireComponent {
         if (circuit.isClient) return;
         ServerCircuitContext context = ((ServerCircuit) circuit).getContext();
         FlatDirection portSide = Circuit.getPortSide(pos);
+        if(portSide == null) throw new IllegalStateException("Cannot place port on non-port location");
         boolean isOutput = state.getValue(IS_OUTPUT);
         boolean wasOutput = oldState.getValue(IS_OUTPUT);
         context.setRenderStrength(portSide, state.getValue(POWER));

@@ -1,6 +1,7 @@
 package net.replaceitem.integratedcircuit.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.replaceitem.integratedcircuit.client.gui.IntegratedCircuitScreen;
 import net.replaceitem.integratedcircuit.network.packet.CircuitNameUpdateS2CPacket;
 import net.replaceitem.integratedcircuit.network.packet.ComponentUpdateS2CPacket;
@@ -9,10 +10,12 @@ import net.replaceitem.integratedcircuit.network.packet.EditIntegratedCircuitS2C
 @SuppressWarnings("resource")
 public class ClientPacketHandler {
     public static void receiveEditIntegratedCircuitPacket(EditIntegratedCircuitS2CPacket packet, ClientPlayNetworking.Context context) {
+        ClientLevel level = context.client().level;
+        if(level == null) return;
         context.client().setScreen(
             new IntegratedCircuitScreen(
                 packet.getClientCircuit(
-                    context.client().level,
+                    level,
                     packet.pos()
                 ),
                 packet.customName()

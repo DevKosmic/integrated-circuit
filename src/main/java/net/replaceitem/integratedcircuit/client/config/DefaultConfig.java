@@ -5,14 +5,15 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.replaceitem.integratedcircuit.mixin.KeyBindingAccessor;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 
 public class DefaultConfig {
     
     public static boolean clothConfigEnabled = false;
-    public static DefaultConfig config;
+    @Nullable
+    private static DefaultConfig config;
     
     public static void initialize() {
         clothConfigEnabled = FabricLoader.getInstance().isModLoaded("cloth-config2");
@@ -21,6 +22,11 @@ public class DefaultConfig {
         } else {
             config = new DefaultConfig();
         }
+    }
+
+    public static DefaultConfig getConfig() {
+        if(config == null) throw new IllegalStateException("Config not initialized");
+        return config;
     }
 
     public InputConstants.Key getPlaceKeybind() {
@@ -63,8 +69,7 @@ public class DefaultConfig {
             return prettyName;
         }
     }
-    
-    
+
     @Nullable
     public static Options getGameOptions() {
         Minecraft client = Minecraft.getInstance();
